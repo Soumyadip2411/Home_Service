@@ -6,29 +6,33 @@
 *Welcome page with featured services and categories*
 
 ### 🔍 Services Discovery
-![Services Page](screenshots/services-page.png)
+![image](https://github.com/user-attachments/assets/e438aa4f-da8c-4df3-a405-6bf67e6ecaf4)
+
 *Browse and search services with grid and map views*
 
-### 🗺️ Map View
-![Map View](screenshots/map-view.png)
-*Interactive map showing nearby services with distance calculations*
+### 🗺️ Login Page
+![image](https://github.com/user-attachments/assets/a2565be2-2b4e-4348-8f52-791788c33d47)
+
+*pretty looking  login/register/reset-password pages*
 
 ### 📱 Service Details
-![Service Details](screenshots/service-details.png)
+![image](https://github.com/user-attachments/assets/1f619e71-5efe-45dd-a794-6e018aaa187d)
+
 *Detailed service information with reviews and booking options*
 
 ### 🎯 Booking Process
-![Booking](screenshots/booking.png)
+![image](https://github.com/user-attachments/assets/f6d03d8d-1189-4ecf-8709-c3796615388d)
+
 *Streamlined booking process with location selection*
 
-### 👤 User Dashboard
-![User Dashboard](screenshots/user-dashboard.png)
-*User profile and booking management*
+### 👤 Recommend Service 
+![image](https://github.com/user-attachments/assets/59ebed57-3629-4c03-a6d0-59efe39a1765)
+
+*Recommend service based on my previous taken services and others interactions*
 
 ### 🔧 Provider Dashboard
-![Provider Dashboard](screenshots/provider-dashboard.png)
+![image](https://github.com/user-attachments/assets/561d1675-78d1-40ca-b7ff-1bbcb5ada0d9)
+
 *Service provider dashboard for managing services and bookings*
 
-### 📊 Admin Panel
-![Admin Panel](screenshots/admin-panel.png)
-*Admin interface for platform management*
+
