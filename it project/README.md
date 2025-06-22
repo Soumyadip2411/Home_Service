@@ -249,7 +249,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Email**: support@servicebooking.com
+- **Email**: soumyadip2411@gmail.com
 - **Documentation**: [Wiki](https://github.com/yourusername/service-booking-platform/wiki)
 - **Issues**: [GitHub Issues](https://github.com/yourusername/service-booking-platform/issues)
 
