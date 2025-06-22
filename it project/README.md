@@ -1,7 +1,8 @@
 ## 📸 Screenshots
 
 ### 🏠 Homepage
-![Homepage](screenshots/homepage.png)
+![image](https://github.com/user-attachments/assets/e7fbe87d-16b1-406c-a9fe-84c2dbd7b501)
+
 *Welcome page with featured services and categories*
 
 ### 🔍 Services Discovery
