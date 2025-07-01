@@ -15,6 +15,7 @@ import serviceRouter from './route/service.route.js';
 import interactionRouter from "./route/interaction.route.js";
 import recommendationRouter from "./route/recommendation.route.js";
 import reviewRouter from "./route/review.route.js";
+import chatRoomRouter from "./route/chatRoom.route.js";
 
 const app = express();
 
@@ -50,6 +51,7 @@ app.use("/api/service",serviceRouter)
 app.use("/api/interactions",interactionRouter);
 app.use("/api/recommendations",recommendationRouter);
 app.use("/api/review", reviewRouter);
+app.use("/api/chat", chatRoomRouter);
 
 connectDB().then(() => {
   app.listen(PORT, () => {

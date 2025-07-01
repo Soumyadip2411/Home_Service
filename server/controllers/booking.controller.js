@@ -4,6 +4,7 @@ import { bookingNotificationTemplate, updateBookingStatusTemplate } from "../uti
 import sendEmail from "../config/sendEmail.js";
 import Service from "../models/service.model.js";
 import Review from "../models/review.model.js";
+import { createChatRoom, deactivateChatRoom } from "./chatRoom.controller.js";
 
 export const getBookings = async (request, response) => {
   try {
@@ -150,6 +151,13 @@ export async function updateStatus(request, response) {
         success: false,
         error: true,
       });
+    }
+
+    // Chat room logic
+    if (status === "confirmed") {
+      await createChatRoom(updatedBooking);
+    } else if (status === "completed") {
+      await deactivateChatRoom(updatedBooking._id);
     }
 
     if (updatedBooking) {

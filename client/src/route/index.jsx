@@ -9,13 +9,23 @@ import Home from "../pages/Home";
 import ProtectedRoute from "../common/protectedRoute";
 import BookService from "../pages/BookService";
 import Categories from "../components/Categories";
-import Bookings from "../components/Bookings";
+import BookingsPage from "../pages/Bookings";
+import BookingsComponent from "../components/Bookings";
 import Services from "../components/Services";
 import YourServices from "../components/YourServices";
 import ServiceDetails from "../pages/ServiceDetails";
 import CategoryServices from "../components/CategoryServices";
 import Review from "../components/Review";
 import Recommendation from "../components/Recommendation";
+import ChatPage from '../pages/ChatPage';
+import { useSelector } from 'react-redux';
+import React from 'react';
+
+function BookingsRoleBased() {
+  const role = useSelector(state => state.user.role);
+  if (role === 'PROVIDER') return <BookingsComponent />;
+  return <BookingsPage />;
+}
 
 const router = createBrowserRouter([
   {
@@ -38,10 +48,11 @@ const router = createBrowserRouter([
             element: <Home />,
             children: [
               { index: true, element: <Categories /> },
-              {path: "recommendations", element: <Recommendation />},
-              { path: "bookings", element: <Bookings /> },
+              { path: "recommendations", element: <Recommendation /> },
+              { path: "bookings", element: <BookingsRoleBased /> },
+              { path: "chat/:bookingId", element: <ChatPage /> },
               { path: "services", element: <Services /> },
-              { path: "services/category/:categoryId", element: <CategoryServices /> }, // Add this line
+              { path: "services/category/:categoryId", element: <CategoryServices /> },
               { path: "service/:serviceId", element: <ServiceDetails /> },
               { path: "review/:bookingId", element: <Review /> },
             ],

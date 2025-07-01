@@ -207,6 +207,16 @@ const Bookings = () => {
                     <ReviewButton booking={booking} />
                   </>
                 )}
+                {(booking.status === 'confirmed' || booking.status === 'completed') && (
+                  <button
+                    className="ml-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                    onClick={() => navigate(`/chat/${booking._id}`)}
+                  >
+                    {user.role === 'PROVIDER'
+                      ? (view === 'requests' ? 'Chat with your client' : 'Chat with your provider')
+                      : 'Chat with your provider'}
+                  </button>
+                )}
               </div>
             </motion.div>
           ))}

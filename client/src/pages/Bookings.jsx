@@ -5,11 +5,16 @@ import { motion } from "framer-motion";
 import { FiStar, FiClock, FiMapPin } from "react-icons/fi";
 import Axios from "../utils/Axios";
 import SummaryApi from "../common/SummaryApi";
+import ChatSection from '../components/ChatSection';
+import { useSelector } from 'react-redux';
 
 const Bookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const userId = useSelector(state => state.user._id);
+  const userRole = useSelector(state => state.user.role);
+  const [openChatId, setOpenChatId] = useState(null);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -56,7 +61,7 @@ const Bookings = () => {
             key={booking._id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20"
+            className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 relative"
           >
             <h3 className="text-xl font-semibold mb-4">{booking.service.title}</h3>
             <div className="space-y-2 mb-4">
@@ -85,6 +90,15 @@ const Bookings = () => {
                 <FiStar className="text-lg" />
                 Write Review
               </motion.button>
+            )}
+            {/* Chat Button for confirmed or completed bookings */}
+            {(booking.status === 'confirmed' || booking.status === 'completed') && (
+              <button
+                className="mt-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors w-full"
+                onClick={() => navigate(`/chat/${booking._id}`)}
+              >
+                {userRole === 'PROVIDER' ? 'Chat with your client' : 'Chat with your provider'}
+              </button>
             )}
           </motion.div>
         ))}
