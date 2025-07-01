@@ -153,3 +153,15 @@ export const bookingNotificationTemplate = ({ providerName, customerName, servic
   </div>
   `;
 };
+
+export const providerRequestTemplate = ({ userId, userName }) => {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #f9f9f9;">
+      <h2 style="color: #333;">Provider Request</h2>
+      <p>User <strong>${userName}</strong> (ID: <strong>${userId}</strong>) has requested to become a provider.</p>
+      <p>Please review and take the necessary action in the admin dashboard.</p>
+      <br />
+      <p style="font-size: 14px; color: #999;">&mdash; The HomeService System</p>
+    </div>
+  `;
+};

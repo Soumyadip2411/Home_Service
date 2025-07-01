@@ -4,6 +4,7 @@ import bcryptjs from "bcryptjs";
 import {
   verifyEmailTemplate,
   forgotPasswordTemplate,
+  providerRequestTemplate,
 } from "../utils/emailTemplate.js";
 import generatedAccessToken from "../utils/generatedAccessToken.js";
 import genertedRefreshToken from "../utils/generatedRefreshToken.js";
@@ -511,6 +512,36 @@ export async function userDetails(request, response) {
       message: "Something is wrong",
       error: true,
       success: false,
+    });
+  }
+}
+
+export async function requestProviderRoleController(request, response) {
+  try {
+    const userId = request.userId;
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return response.status(404).json({
+        message: "User not found",
+        error: true,
+        success: false
+      });
+    }
+    await sendEmail({
+      sendTo: "soumyadip2411@gmail.com",
+      subject: "Provider Request from HomeService User",
+      html: providerRequestTemplate({ userId: user._id, userName: user.name })
+    });
+    return response.json({
+      message: "Provider request sent successfully",
+      error: false,
+      success: true
+    });
+  } catch (error) {
+    return response.status(500).json({
+      message: error.message || error,
+      error: true,
+      success: false
     });
   }
 }
