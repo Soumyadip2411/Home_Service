@@ -39,6 +39,26 @@ const Header = () => {
     }
   };
 
+  // Add this function to get real location
+  const getUserLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          localStorage.setItem('userLat', lat);
+          localStorage.setItem('userLng', lng);
+          window.location.reload(); // Reload to update location in header and recommendations
+        },
+        (error) => {
+          alert('Unable to retrieve your location. Please allow location access.');
+        }
+      );
+    } else {
+      alert('Geolocation is not supported by your browser.');
+    }
+  };
+
   useEffect(() => {
     const userLat = localStorage.getItem('userLat');
     const userLng = localStorage.getItem('userLng');
@@ -81,6 +101,12 @@ const Header = () => {
             <div className="flex items-center gap-2 text-gray-300">
               <FiMapPin className="text-green-500" />
               <span className="text-sm">{currentLocation}</span>
+              <button
+                onClick={getUserLocation}
+                className="ml-2 px-2 py-1 bg-green-600 text-white rounded text-xs"
+              >
+                Use My Location
+              </button>
             </div>
           </div>
 
