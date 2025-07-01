@@ -18,7 +18,7 @@ const AddService = () => {
   const [categories, setCategories] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState(null);
 
-  // 📦 Fetch categories
+  // Fetch categories
   useEffect(() => {
     fetchCategories()
   }, []);
@@ -55,6 +55,22 @@ const AddService = () => {
         latitude: "",
         longitude: "",
       }));
+    }
+  };
+
+  const handleUseCurrentLocation = () => {
+    const lat = localStorage.getItem('userLat');
+    const lng = localStorage.getItem('userLng');
+    if (lat && lng) {
+      setFormData(prev => ({
+        ...prev,
+        latitude: lat,
+        longitude: lng,
+      }));
+      setSelectedLocation({ lat: parseFloat(lat), lng: parseFloat(lng) });
+      toast.success('Current location set from your profile!');
+    } else {
+      toast.error('No location found in your profile.');
     }
   };
 
@@ -174,7 +190,18 @@ const AddService = () => {
           />
         </div>
 
-        {/* Read-only GPS inputs for reference */}
+        
+        
+
+        {/* Use Current Location Button */}
+        <button
+          type="button"
+          onClick={handleUseCurrentLocation}
+          className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-all duration-300 font-medium mb-2"
+        >
+          Use Current Location
+        </button>
+          {/* Read-only GPS inputs for reference */}
         <div className="grid grid-cols-2 gap-4">
           <input
             type="text"
@@ -199,7 +226,7 @@ const AddService = () => {
           disabled={!selectedLocation}
           className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Add Service
+          Submit
         </button>
       </form>
     </div>

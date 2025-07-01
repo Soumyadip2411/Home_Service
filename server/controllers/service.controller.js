@@ -39,7 +39,11 @@ export const addService = async (req, res) => {
     });
 
     await service.save();
-    res.status(201).json({ message: "Service added", service });
+    res.status(201).json({ 
+      success: true,
+      message: "Service added", 
+      service 
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server Error" });
