@@ -64,7 +64,7 @@ export async function addInteraction(request, response) {
       interactionType
     });
 
-    console.log(newInteraction);
+    
     // Save to database
     const savedInteraction = await newInteraction.save();
 
