@@ -18,6 +18,7 @@ import CategoryServices from "../components/CategoryServices";
 import Review from "../components/Review";
 import Recommendation from "../components/Recommendation";
 import ChatPage from '../pages/ChatPage';
+import BotChat from '../pages/BotChat';
 import { useSelector } from 'react-redux';
 import React from 'react';
 
@@ -55,6 +56,7 @@ const router = createBrowserRouter([
               { path: "services/category/:categoryId", element: <CategoryServices /> },
               { path: "service/:serviceId", element: <ServiceDetails /> },
               { path: "review/:bookingId", element: <Review /> },
+              { path: "bot-chat", element: <BotChat /> },
             ],
           },
           { path: "book-service/:serviceId", element: <BookService /> },

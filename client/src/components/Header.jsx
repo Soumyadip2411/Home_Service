@@ -7,6 +7,7 @@ import { toast } from 'react-hot-toast';
 import Axios from '../utils/Axios';
 import SummaryApi from '../common/SummaryApi';
 import { FiMapPin } from 'react-icons/fi';
+import { FaRobot } from 'react-icons/fa';
 
 const Header = () => {
   const location = useLocation();
@@ -204,6 +205,15 @@ const Header = () => {
               whileTap={{ scale: 0.95 }}
             >
               Services
+            </motion.button>
+            <motion.button 
+              onClick={() => navigate('/bot-chat')}
+              className="px-6 py-2 rounded-lg font-medium transition-all bg-yellow-400 text-black hover:bg-yellow-300 flex items-center gap-2"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <FaRobot className="text-lg" />
+              Chatbot
             </motion.button>
             <motion.button 
               onClick={handleLogout}
