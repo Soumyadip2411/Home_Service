@@ -212,12 +212,7 @@ const Recommendation = ({ searchQuery }) => {
           >
             <FaSyncAlt className={`text-lg ${loading ? 'animate-spin' : ''}`} />
           </button>
-          <button
-            onClick={() => setShowDebug(d => !d)}
-            className="ml-2 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm border border-blue-300"
-          >
-            {showDebug ? 'Hide' : 'Show'} Recommendation Details
-          </button>
+          
         </div>
       </div>
 
