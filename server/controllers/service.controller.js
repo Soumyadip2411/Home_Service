@@ -15,7 +15,7 @@ export const addService = async (req, res) => {
       latitude,
       longitude,
     } = req.body;
-    console.log(req.userId);
+    
     if (!latitude || !longitude) {
       return res.status(400).json({ message: "Location is required" });
     }

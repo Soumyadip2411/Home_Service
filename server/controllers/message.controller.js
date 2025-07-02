@@ -6,7 +6,7 @@ export const sendMessage = async (req, res) => {
   try {
     const { chatRoomId } = req.params;
     const { message } = req.body;
-    const senderId = req.userId;
+    const senderId = req.body.senderId || req.userId;
     const chatRoom = await ChatRoom.findById(chatRoomId);
     if (!chatRoom) return res.status(404).json({ message: 'Chat room not found' });
     if (!chatRoom.isActive) return res.status(403).json({ message: 'Chat is closed' });

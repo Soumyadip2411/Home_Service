@@ -16,6 +16,7 @@ import interactionRouter from "./route/interaction.route.js";
 import recommendationRouter from "./route/recommendation.route.js";
 import reviewRouter from "./route/review.route.js";
 import chatRoomRouter from "./route/chatRoom.route.js";
+import botRouter from "./route/bot.route.js";
 
 const app = express();
 
@@ -28,7 +29,7 @@ app.use(express.json({ limit: "50mb" })); // for JSON payloads
 app.use(express.urlencoded({ extended: true, limit: "50mb" })); // optional for form fields
 
 app.use(cookieParser());
-app.use(morgan());
+//app.use(morgan());
 app.use(
   helmet({
     crossOriginResourcePolicy: false,
@@ -52,6 +53,7 @@ app.use("/api/interactions",interactionRouter);
 app.use("/api/recommendations",recommendationRouter);
 app.use("/api/review", reviewRouter);
 app.use("/api/chat", chatRoomRouter);
+app.use("/api/chat/bot", botRouter);
 
 connectDB().then(() => {
   app.listen(PORT, () => {

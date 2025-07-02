@@ -80,8 +80,19 @@ const ChatSection = ({ bookingId, userId, userRole }) => {
     if (!chatRoom?.isActive) return;
     setSending(true);
     try {
+      // 1. Save the user's question as a message
+      await axios.post(`/api/chat/chatroom/${chatRoom._id}/message`, { message: query });
+
+      // 2. Get the bot's response
       const { data } = await axios.post(`/api/chat/bot`, { query });
-      setMessages((prev) => [...prev, { _id: Date.now(), senderId: 'bot', message: data.response, timestamp: new Date().toISOString() }]);
+
+      // 3. Save the bot's response as a message
+      await axios.post(`/api/chat/chatroom/${chatRoom._id}/message`, { message: data.response, senderId: 'bot' });
+
+      // 4. Refetch messages
+      const { data: newMessages } = await axios.get(`/api/chat/chatroom/${chatRoom._id}/messages`);
+      setMessages(newMessages);
+      setInput("");
     } catch (err) {
       setMessages((prev) => [...prev, { _id: Date.now(), senderId: 'bot', message: 'Bot failed to respond.', timestamp: new Date().toISOString() }]);
     } finally {

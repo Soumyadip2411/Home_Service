@@ -27,7 +27,7 @@ const auth = async (request, response, next) => {
     }
 
     request.userId = decode.id;
-    console.log("✅ Authenticated user ID:", decode.id);
+    
     next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {

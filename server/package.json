@@ -11,6 +11,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@google/generative-ai": "^0.6.0",
     "@react-google-maps/api": "^2.20.7",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.4.0",
