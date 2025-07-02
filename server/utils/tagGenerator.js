@@ -4,6 +4,7 @@ import { removeStopwords } from 'stopword';
 // Initialize tokenizer and TF-IDF
 const tokenizer = new natural.WordTokenizer();
 const tfidf = new natural.TfIdf();
+const stemmer = natural.PorterStemmer;
 
 // Common service-related keywords and their categories
 const serviceKeywords = {
@@ -27,6 +28,27 @@ const serviceKeywords = {
   automotive: ['car', 'auto', 'vehicle', 'mechanic', 'repair', 'maintenance', 'service']
 };
 
+// Synonyms map for common service-related terms
+const tagSynonyms = {
+  cleaning: ['clean', 'sanitize', 'disinfect', 'tidy'],
+  repair: ['fix', 'mend', 'restore', 'patch'],
+  beauty: ['salon', 'spa', 'grooming', 'makeover'],
+  fitness: ['workout', 'exercise', 'training', 'gym'],
+  education: ['tutor', 'teach', 'lesson', 'course'],
+  technology: ['tech', 'it', 'software', 'computer'],
+  food: ['catering', 'meal', 'chef', 'cook'],
+  photography: ['photo', 'camera', 'shoot', 'video'],
+  legal: ['lawyer', 'attorney', 'legal', 'counsel'],
+  financial: ['accounting', 'tax', 'finance', 'audit'],
+  health: ['medical', 'therapy', 'wellness', 'care'],
+  home: ['house', 'residence', 'apartment', 'dwelling'],
+  pet: ['animal', 'dog', 'cat', 'veterinary'],
+  event: ['party', 'wedding', 'celebration', 'gathering'],
+  security: ['guard', 'protection', 'safety', 'surveillance'],
+  gardening: ['garden', 'lawn', 'landscape', 'plants'],
+  automotive: ['car', 'vehicle', 'auto', 'mechanic']
+};
+
 // Enhanced tag generation function
 export const generateTags = (title, description, category) => {
   try {
@@ -48,10 +70,26 @@ export const generateTags = (title, description, category) => {
     // Add category-based keywords
     if (category && category.name) {
       keywords.add(category.name.toLowerCase());
+      // Add stem and synonyms for category
+      keywords.add(stemmer.stem(category.name.toLowerCase()));
+      if (tagSynonyms[category.name.toLowerCase()]) {
+        tagSynonyms[category.name.toLowerCase()].forEach(syn => keywords.add(syn));
+      }
     }
     
     // Add service-specific keywords
     tokens.forEach(token => {
+      // Add original token and its stem
+      keywords.add(token);
+      keywords.add(stemmer.stem(token));
+      // Add synonyms if available
+      Object.entries(tagSynonyms).forEach(([main, syns]) => {
+        if (main === token || syns.includes(token)) {
+          keywords.add(main);
+          syns.forEach(syn => keywords.add(syn));
+        }
+      });
+      
       // Check against service keyword categories
       Object.entries(serviceKeywords).forEach(([category, words]) => {
         if (words.some(word => token.includes(word) || word.includes(token))) {
@@ -82,8 +120,8 @@ export const generateTags = (title, description, category) => {
     const contextualTags = generateContextualTags(title, description, category);
     contextualTags.forEach(tag => keywords.add(tag));
     
-    // Convert to array and limit to 10 tags
-    const tags = Array.from(keywords).slice(0, 10);
+    // Convert to array and limit to 15 tags
+    const tags = Array.from(keywords).slice(0, 15);
     
     return tags;
   } catch (error) {

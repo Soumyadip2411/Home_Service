@@ -7,6 +7,8 @@ const BotChat = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [recommendations, setRecommendations] = useState([]);
+  const [recLoading, setRecLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
   // Fetch chat history on mount
@@ -47,6 +49,161 @@ const BotChat = () => {
     } catch {}
   };
 
+  // Tag profile update logic for localStorage
+  const TAG_DECAY = 0.8;
+  const TAG_BOOSTS = { bot: 1.0, content: 0.5, collab: 0.4 };
+  const MAX_BOT_TAGS = 3; // Maximum tags to add from bot responses
+
+  // Helper function to filter and prioritize bot tags
+  const filterBotTags = (tags) => {
+    if (!tags || tags.length === 0) return [];
+    
+    // Priority order: service categories > specific services > general terms
+    const priorityCategories = [
+      'cleaning', 'repair', 'beauty', 'fitness', 'education', 'technology', 
+      'food', 'photography', 'legal', 'financial', 'health', 'home', 
+      'pet', 'event', 'security', 'gardening', 'automotive'
+    ];
+    
+    const specificServices = [
+      'massage', 'tutoring', 'plumbing', 'electrical', 'carpentry', 'painting',
+      'cooking', 'delivery', 'transport', 'consultation', 'installation'
+    ];
+    
+    // Score tags based on priority
+    const scoredTags = tags.map(tag => {
+      let score = 0;
+      const lowerTag = tag.toLowerCase();
+      
+      // High priority for service categories
+      if (priorityCategories.includes(lowerTag)) {
+        score += 10;
+      }
+      // Medium priority for specific services
+      else if (specificServices.includes(lowerTag)) {
+        score += 7;
+      }
+      // Lower priority for general terms
+      else if (['professional', 'expert', 'quality', 'reliable', 'experienced'].includes(lowerTag)) {
+        score += 3;
+      }
+      // Very low priority for generic terms
+      else {
+        score += 1;
+      }
+      
+      return { tag, score };
+    });
+    
+    // Sort by score and return top tags
+    return scoredTags
+      .sort((a, b) => b.score - a.score)
+      .slice(0, MAX_BOT_TAGS)
+      .map(item => item.tag);
+  };
+
+  // Utility to get the full tag profile breakdown from localStorage
+  function getTagProfileBreakdown() {
+    return JSON.parse(localStorage.getItem('userTagProfileBreakdown') || '{}');
+  }
+
+  // Utility to set the full tag profile breakdown in localStorage
+  function setTagProfileBreakdown(profile) {
+    localStorage.setItem('userTagProfileBreakdown', JSON.stringify(profile));
+  }
+
+  // Utility to get the flat tag profile (total scores)
+  function getTagProfile() {
+    const breakdown = getTagProfileBreakdown();
+    const flat = {};
+    for (let tag in breakdown) {
+      flat[tag] = breakdown[tag].total;
+    }
+    return flat;
+  }
+
+  // Utility to sync tag profile to backend
+  async function syncTagProfileToBackend(profile) {
+    try {
+      await axios.post('/api/recommendations/replace-profile', { profile }, {
+        headers: {
+          'auth-token': localStorage.getItem('token'),
+        },
+      });
+    } catch (err) {
+      // Optionally handle error
+    }
+  }
+
+  // Update tag profile breakdown in localStorage
+  function updateLocalTagProfile(newTags, source) {
+    let profile = getTagProfileBreakdown();
+    // Decay all tags
+    for (let tag in profile) {
+      for (let src of ['bot', 'content', 'collab']) {
+        profile[tag][src] = (profile[tag][src] || 0) * TAG_DECAY;
+      }
+      profile[tag].total = (profile[tag].bot || 0) + (profile[tag].content || 0) + (profile[tag].collab || 0);
+    }
+    // Add/increase new tags
+    for (let tag of newTags) {
+      if (!profile[tag]) profile[tag] = { bot: 0, content: 0, collab: 0, total: 0 };
+      profile[tag][source] = (profile[tag][source] || 0) + (TAG_BOOSTS[source] || 0.2);
+      profile[tag].total = (profile[tag].bot || 0) + (profile[tag].content || 0) + (profile[tag].collab || 0);
+    }
+    setTagProfileBreakdown(profile);
+    // Also update the flat profile for compatibility
+    const flatProfile = getTagProfile();
+    localStorage.setItem('userTagProfile', JSON.stringify(flatProfile));
+    // Sync to backend in real time
+    syncTagProfileToBackend(flatProfile);
+    // Clean up unnecessary localStorage fields
+    localStorage.removeItem('userTagProfileBreakdown');
+    return flatProfile;
+  }
+
+  const fetchRecommendationsByProfile = async () => {
+    setRecLoading(true);
+    setRecommendations([]);
+    try {
+      const lat = parseFloat(localStorage.getItem('userLat'));
+      const lng = parseFloat(localStorage.getItem('userLng'));
+      if (!lat || !lng) return;
+      const profile = getTagProfile();
+      const { data } = await axios.post('/api/recommendations/profile-tags', {
+        profile,
+        lat,
+        lng
+      }, {
+        headers: {
+          'auth-token': localStorage.getItem('token'),
+        },
+      });
+      setRecommendations(data.data || []);
+    } catch {
+      setRecommendations([]);
+    } finally {
+      setRecLoading(false);
+    }
+  };
+
+  // Listen for real-time tag profile changes (across tabs)
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'userTagProfile' || e.key === 'userTagProfileBreakdown') {
+        fetchRecommendationsByProfile();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // On mount, fetch recommendations by current profile
+  useEffect(() => {
+    fetchRecommendationsByProfile();
+    // eslint-disable-next-line
+  }, []);
+
   const handleSend = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
@@ -60,10 +217,22 @@ const BotChat = () => {
       const botMessage = { sender: 'bot', text: data.response };
       setMessages((prev) => [...prev, botMessage]);
       await saveMessage('bot', botMessage.text);
+      // Extract tags from bot response and filter them
+      const tagRes = await axios.post('/api/recommendations/extract-tags', { text: data.response });
+      const allTags = tagRes.data.tags || [];
+      const filteredTags = filterBotTags(allTags);
+      
+      if (filteredTags.length > 0) {
+        updateLocalTagProfile(filteredTags, 'bot');
+        fetchRecommendationsByProfile();
+      } else {
+        setRecommendations([]);
+      }
     } catch (err) {
       const botMessage = { sender: 'bot', text: 'Sorry, I could not process your request.' };
       setMessages((prev) => [...prev, botMessage]);
       await saveMessage('bot', botMessage.text);
+      setRecommendations([]);
     } finally {
       setLoading(false);
     }
@@ -99,6 +268,38 @@ const BotChat = () => {
               </div>
             ))}
             <div ref={messagesEndRef} />
+            {/* Recommendations Section */}
+            {recLoading && (
+              <div className="text-center py-4 text-gray-500">Loading recommendations...</div>
+            )}
+            {recommendations.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-lg font-bold mb-2 text-green-700">Recommended Services:</h3>
+                <div className="grid grid-cols-1 gap-4">
+                  {recommendations
+                    .slice(0, 5)
+                    .map((service, idx) => (
+                      <div key={service._id + idx} className="border rounded-lg p-4 bg-gray-50 shadow">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-semibold text-lg">{service.title}</span>
+                          <span className="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded">{service.category?.name}</span>
+                        </div>
+                        <div className="text-sm text-gray-600 mb-1">{service.description}</div>
+                        <div className="flex items-center text-sm mb-1">
+                          <span className="text-yellow-600 font-bold mr-2">₹{service.price}</span>
+                          <span className="text-gray-400 ml-2">{service.duration}</span>
+                        </div>
+                        <button
+                          onClick={() => navigate(`/services/${service._id}`)}
+                          className="mt-2 bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs"
+                        >
+                          View Details
+                        </button>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
           </div>
           <form onSubmit={handleSend} className="flex items-center gap-2 px-4 py-3 bg-white border-t sticky bottom-0">
             <input

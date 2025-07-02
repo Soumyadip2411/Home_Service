@@ -5,6 +5,7 @@ import Axios from "../utils/Axios";
 import { toast } from "react-hot-toast";
 import { FiClock, FiMapPin, FiStar, FiUser } from "react-icons/fi";
 import { useSelector } from "react-redux";
+import { updateLocalTagProfile } from '../components/Recommendation';
 
 const ServiceDetails = () => {
   const { serviceId } = useParams();
@@ -63,6 +64,10 @@ const ServiceDetails = () => {
         },
       });
       return;
+    }
+    // Update tag profile for content-based filtering
+    if (service.tags && service.tags.length > 0) {
+      updateLocalTagProfile(service.tags, 'content');
     }
     navigate(`/book-service/${serviceId}`);
   };

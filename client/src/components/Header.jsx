@@ -26,14 +26,18 @@ const Header = () => {
   // Add handleLogout function
   const handleLogout = async () => {
     try {
+      // Sync tag profile to backend before logout
+      const tagProfile = JSON.parse(localStorage.getItem('userTagProfile') || '{}');
+      if (Object.keys(tagProfile).length > 0) {
+        await Axios.post('/api/recommendations/replace-profile', { profile: tagProfile });
+      }
       const response = await Axios(SummaryApi.logout);
-      
       if (response.data.success) {
         localStorage.removeItem("accesstoken");
         localStorage.removeItem("refreshToken");
         localStorage.removeItem("userLat");
         localStorage.removeItem("userLng");
-        
+        localStorage.removeItem("userTagProfile");
         dispatch(logout());
         toast.success("Logged out successfully");
         navigate("/login");
@@ -144,7 +148,7 @@ const Header = () => {
             </div>
 
             {/* Location Display */}
-            <div className="flex items-center gap-2 text-gray-300">
+            <div className="flex items-center  text-gray-300">
               <FiMapPin className="text-green-500" />
               <span className="text-sm">{currentLocation}</span>
               <button

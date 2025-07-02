@@ -58,3 +58,21 @@ export const getCollaborativeRecommendations = async (userId) => {
     return [];
   }
 };
+
+// Real-time collaborative score for a service
+export function getCollaborativeScore(profile, service) {
+  // Simple heuristic: if the service's tags overlap with the user's top tags, boost score
+  if (!service.tags || !Array.isArray(service.tags)) return 0;
+  const userTags = Object.keys(profile).map(t => t.toLowerCase());
+  const serviceTags = service.tags.map(t => t.toLowerCase());
+  let overlap = 0;
+  for (let tag of userTags) {
+    for (let sTag of serviceTags) {
+      if (sTag.includes(tag) || tag.includes(sTag)) {
+        overlap += 1;
+      }
+    }
+  }
+  // Normalize by number of tags
+  return overlap / (serviceTags.length || 1);
+}

@@ -90,10 +90,15 @@ const Login = () => {
         const userDetails = await fetchUserDetails();
         dispatch(setUserDetails(userDetails.data));
         setData({ email: "", password: "" });
-        
+        // Fetch and store user tag profile
+        try {
+          const profileRes = await Axios.get('/api/recommendations/profile');
+          if (profileRes.data && profileRes.data.profile) {
+            localStorage.setItem('userTagProfile', JSON.stringify(profileRes.data.profile));
+          }
+        } catch {}
         // Get location after successful login
         await handleGetLocation();
-        
         navigate("/");
       }
     } catch (err) {
@@ -208,7 +213,7 @@ const Login = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
         >
-          Don’t have an account?{" "}
+          Don't have an account?{" "}
           <Link to="/register" className="text-green-500 hover:underline font-semibold">
             Register
           </Link>

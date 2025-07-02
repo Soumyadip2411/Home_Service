@@ -48,6 +48,10 @@ const userSchema = new mongoose.Schema(
       enum: ["PROVIDER", "USER"],
       default: "USER",
     },
+    user_tag_profile: {
+      type: Object,
+      default: {}
+    },
   },
   {
     timestamps: true,

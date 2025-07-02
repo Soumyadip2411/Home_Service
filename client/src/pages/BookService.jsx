@@ -6,6 +6,7 @@ import Axios from "../utils/Axios";
 import SummaryApi from "../common/SummaryApi";
 import { FiClock, FiMapPin, FiFileText, FiCalendar, FiDollarSign } from "react-icons/fi";
 import GoogleMapLocationPicker from "../components/GoogleMapLocationPicker";
+import { updateLocalTagProfile } from '../components/Recommendation';
 
 const BookService = () => {
   const { serviceId } = useParams();
@@ -43,6 +44,10 @@ const BookService = () => {
       await Axios.post(`/api/interactions/${serviceId}`, {
         interactionType: "click"
       });
+      // Update tag profile for content-based filtering
+      if (service && service.tags && service.tags.length > 0) {
+        updateLocalTagProfile(service.tags, 'content');
+      }
       setShowContact(true);
     } catch (error) {
       console.error("Interaction tracking failed:", error);
@@ -114,6 +119,10 @@ const BookService = () => {
         await Axios.post(`/api/interactions/${serviceId}`, {
           interactionType: "booking"
         });
+        // Update tag profile for content-based filtering
+        if (service && service.tags && service.tags.length > 0) {
+          updateLocalTagProfile(service.tags, 'content');
+        }
         toast.success("Booking created successfully!");
         navigate(-1);
       }
