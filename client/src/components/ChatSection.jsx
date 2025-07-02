@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axios from '../utils/Axios';
+import { useNavigate } from 'react-router-dom';
+import { FaAngleDoubleDown, FaRobot } from "react-icons/fa";
 
 function getInitials(name) {
   if (!name) return '?';
@@ -23,6 +25,7 @@ const ChatSection = ({ bookingId, userId, userRole }) => {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchChatRoom = async () => {
@@ -108,26 +111,34 @@ const ChatSection = ({ bookingId, userId, userRole }) => {
   const chatPartner = userRole === 'PROVIDER' ? 'Client' : 'Provider';
 
   return (
-    <div className="min-h-screen flex justify-center items-center bg-gradient-to-b from-white to-gray-50 px-4">
-      <div className="w-full max-w-2xl flex flex-col h-[calc(100vh-120px)] sm:h-[80vh] border rounded-xl shadow-lg bg-white overflow-hidden relative">
+    <div className="fixed inset-0 bg-gradient-to-b from-white to-gray-50 flex justify-center items-center px-4">
+      
+      <div className="w-full max-w-2xl flex flex-col h-full border rounded-xl shadow-lg bg-white overflow-hidden relative">
         {/* Header */}
+        
         <div className="flex items-center gap-3 px-5 py-4 bg-white border-b">
           <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold text-lg">
             {getInitials(chatPartner)}
           </div>
-          <div>
+          <div className="flex-1">
             <h2 className="font-semibold text-gray-900 text-base">Chat with {chatPartner}</h2>
             <p className={`text-xs ${chatRoom.isActive ? 'text-green-600' : 'text-red-500'}`}>
               {chatRoom.isActive ? 'Active' : 'Closed'}
             </p>
           </div>
+          <button
+            className="px-4 py-2 bg-purple-800 text-white rounded-lg hover:bg-purple-400 hover:scale:80 hover:font-extrabold hover:text-black  transition-colors text-sm font-medium"
+            onClick={() => navigate('/bookings')}
+          >
+            &larr; Back to Bookings
+          </button>
         </div>
 
         {/* Chat Messages */}
         <div
           ref={chatContainerRef}
           onScroll={handleScroll}
-          className="flex-1 overflow-y-auto px-4 py-3 space-y-2 scroll-smooth scrollbar-thin scrollbar-thumb-blue-300"
+          className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scroll-smooth scrollbar-thin scrollbar-thumb-blue-300"
         >
           {loading ? (
             <div className="flex justify-center items-center h-full">
@@ -146,8 +157,25 @@ const ChatSection = ({ bookingId, userId, userRole }) => {
                       {getInitials(chatPartner)}
                     </div>
                   )}
-                  <div className={`max-w-xs px-4 py-2 rounded-2xl text-sm shadow ${isMe ? 'bg-blue-500 text-white rounded-br-none' : isBot ? 'bg-yellow-100 text-gray-800 rounded-tl-none border' : 'bg-white text-gray-800 rounded-bl-none border'}`}>
-                    <p>{msg.message}</p>
+                  {isBot && (
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white font-bold mr-2 shadow-md">
+                      <FaRobot className="text-sm" />
+                    </div>
+                  )}
+                  <div className={`max-w-xs px-4 py-3 rounded-2xl text-sm shadow ${
+                    isMe 
+                      ? 'bg-blue-500 text-white rounded-br-none' 
+                      : isBot 
+                        ? 'bg-gradient-to-br from-yellow-50 to-orange-50 text-gray-800 rounded-tl-none border-2 border-yellow-200 shadow-lg' 
+                        : 'bg-white text-gray-800 rounded-bl-none border'
+                  }`}>
+                    {isBot && (
+                      <div className="flex items-center gap-2 mb-2">
+                        <FaRobot className="text-yellow-500 text-xs" />
+                        <span className="text-xs font-semibold text-yellow-600">AI Assistant</span>
+                      </div>
+                    )}
+                    <p className="leading-relaxed">{msg.message}</p>
                     <span className="block text-[10px] text-gray-400 text-right mt-1">
                       {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
@@ -172,14 +200,14 @@ const ChatSection = ({ bookingId, userId, userRole }) => {
               messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
               setIsAtBottom(true);
             }}
-          >
-            ↓ Go Below
+          ><FaAngleDoubleDown />
+            
           </button>
         )}
 
         {/* Suggested Prompts */}
         {chatRoom.isActive && userRole!=='PROVIDER'&&(
-          <div className="bg-white px-4 py-2 border-t text-sm flex flex-wrap gap-2">
+          <div className="bg-white px-4 py-3 border-t text-sm flex flex-wrap gap-2">
             {suggestedPrompts.map((prompt, idx) => (
               <button
                 key={idx}
@@ -194,25 +222,25 @@ const ChatSection = ({ bookingId, userId, userRole }) => {
         )}
 
         {/* Input Area */}
-        <form onSubmit={handleSend} className="flex items-center gap-2 px-4 py-3 bg-white border-t sticky bottom-0">
+        <form onSubmit={handleSend} className="flex items-center gap-2 px-4 py-4 bg-white border-t">
           <input
             type="text"
             placeholder={chatRoom.isActive ? 'Type your message...' : 'Chat closed'}
-            className="flex-1 rounded-full px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
+            className="flex-1 rounded-full px-4 py-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={!chatRoom.isActive || sending}
           />
           <button
             type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded-full font-medium disabled:opacity-40 transition"
+            className="bg-blue-500 text-white px-6 py-3 rounded-full font-medium disabled:opacity-40 transition"
             disabled={!chatRoom.isActive || sending || !input.trim()}
           >
             {sending ? '...' : 'Send'}
           </button>
           <button
             type="button"
-            className="ml-2 text-sm text-blue-600 hover:underline"
+            className="ml-2 text-sm text-blue-600 hover:underline px-3 py-2"
             onClick={() => handleBotAsk(input)}
             disabled={!chatRoom.isActive || sending || !input.trim()}
           >

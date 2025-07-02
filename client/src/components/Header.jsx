@@ -19,6 +19,7 @@ const Header = () => {
   const isServicesActive = location.pathname === '/services';
   const isRecommendationsActive = location.pathname === '/recommendations';
   const [currentLocation, setCurrentLocation] = useState('Loading location...');
+  const [locationLoading, setLocationLoading] = useState(false);
   const [providerRequestLoading, setProviderRequestLoading] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef(null);
@@ -47,23 +48,112 @@ const Header = () => {
     }
   };
 
-  // Add this function to get real location
+  // Improved function to get accurate location
   const getUserLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          localStorage.setItem('userLat', lat);
-          localStorage.setItem('userLng', lng);
-          window.location.reload(); // Reload to update location in header and recommendations
-        },
-        (error) => {
-          alert('Unable to retrieve your location. Please allow location access.');
+    setLocationLoading(true);
+    setCurrentLocation('Getting your location...');
+    
+    if (!navigator.geolocation) {
+      setCurrentLocation('Geolocation not supported');
+      setLocationLoading(false);
+      toast.error('Geolocation is not supported by your browser');
+      return;
+    }
+
+    // High accuracy geolocation options
+    const options = {
+      enableHighAccuracy: true,  // Request high accuracy
+      timeout: 10000,           // 10 second timeout
+      maximumAge: 300000        // Cache for 5 minutes
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const accuracy = position.coords.accuracy;
+        
+        console.log(`Location obtained - Lat: ${lat}, Lng: ${lng}, Accuracy: ${accuracy}m`);
+        
+        // Store coordinates
+        localStorage.setItem('userLat', lat);
+        localStorage.setItem('userLng', lng);
+        
+        // Get address from coordinates
+        getAddressFromCoordinates(lat, lng);
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        setLocationLoading(false);
+        
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setCurrentLocation('Location access denied');
+            toast.error('Please allow location access in your browser settings');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setCurrentLocation('Location unavailable');
+            toast.error('Location information is unavailable');
+            break;
+          case error.TIMEOUT:
+            setCurrentLocation('Location timeout');
+            toast.error('Location request timed out. Please try again');
+            break;
+          default:
+            setCurrentLocation('Location error');
+            toast.error('Unable to get your location');
         }
-      );
-    } else {
-      alert('Geolocation is not supported by your browser.');
+      },
+      options
+    );
+  };
+
+  // Improved function to get address from coordinates
+  const getAddressFromCoordinates = async (lat, lng) => {
+    try {
+      // Try multiple geocoding services for better accuracy
+      const openCageUrl = `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lng}&key=84c8eaa39d454ab8a34547a3c3043670&language=en&limit=1`;
+      
+      const response = await fetch(openCageUrl);
+      const data = await response.json();
+      
+      if (data.results && data.results[0]) {
+        const result = data.results[0];
+        const components = result.components;
+        
+        // Build a more accurate address
+        let address = '';
+        
+        if (components.city || components.town) {
+          address = components.city || components.town;
+        } else if (components.village) {
+          address = components.village;
+        } else if (components.suburb) {
+          address = components.suburb;
+        } else if (components.county) {
+          address = components.county;
+        } else {
+          // Fallback to formatted address
+          address = result.formatted.split(',')[0];
+        }
+        
+        // Add state if available
+        if (components.state) {
+          address += `, ${components.state}`;
+        }
+        
+        setCurrentLocation(address);
+        toast.success('Location updated successfully!');
+      } else {
+        setCurrentLocation('Address not found');
+        toast.error('Could not find address for your location');
+      }
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      setCurrentLocation('Address lookup failed');
+      toast.error('Failed to get address for your location');
+    } finally {
+      setLocationLoading(false);
     }
   };
 
@@ -89,17 +179,9 @@ const Header = () => {
 
     if (userLat && userLng) {
       // Convert coordinates to address using reverse geocoding
-      fetch(`https://api.opencagedata.com/geocode/v1/json?q=${userLat}+${userLng}&key=84c8eaa39d454ab8a34547a3c3043670`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.results && data.results[0]) {
-            const address = data.results[0].formatted.split(',')[1] || data.results[0].formatted;
-            setCurrentLocation(address);
-          }
-        })
-        .catch(() => setCurrentLocation('Location unavailable'));
+      getAddressFromCoordinates(parseFloat(userLat), parseFloat(userLng));
     } else {
-      setCurrentLocation('Location unavailable');
+      setCurrentLocation('Location not set');
     }
   }, []);
 
@@ -148,14 +230,24 @@ const Header = () => {
             </div>
 
             {/* Location Display */}
-            <div className="flex items-center  text-gray-300">
-              <FiMapPin className="text-green-500" />
-              <span className="text-sm">{currentLocation}</span>
+            <div className="flex items-center text-gray-300">
+              <FiMapPin className="text-green-500 mr-2" />
+              <span className="text-sm min-w-[120px]">
+                {locationLoading ? (
+                  <span className="flex items-center gap-1">
+                    <div className="w-3 h-3 border-t-2 border-green-500 rounded-full animate-spin"></div>
+                    Getting location...
+                  </span>
+                ) : (
+                  currentLocation
+                )}
+              </span>
               <button
                 onClick={getUserLocation}
-                className="ml-2 px-2 py-1 bg-green-600 text-white rounded text-xs"
+                disabled={locationLoading}
+                className="ml-2 px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                Use My Location
+                {locationLoading ? 'Getting...' : 'Use My Location'}
               </button>
             </div>
           </div>

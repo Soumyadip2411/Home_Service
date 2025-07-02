@@ -65,9 +65,19 @@ const BookService = () => {
       date.setSeconds(0);
       date.setMilliseconds(0);
       
+      // Format date in local timezone for datetime-local input
+      const formatLocalDateTime = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+      };
+      
       setBookingData(prev => ({
         ...prev,
-        [name]: date.toISOString().slice(0, 16) // Format: YYYY-MM-DDTHH:mm
+        [name]: formatLocalDateTime(date)
       }));
     } else {
       setBookingData(prev => ({ ...prev, [name]: value }));
@@ -89,7 +99,7 @@ const BookService = () => {
     console.log("called")
     e.preventDefault();
 
-    // Validate date
+    // Validate date - convert local time to Date object for comparison
     const selectedDate = new Date(bookingData.scheduledAt);
     const now = new Date();
     const maxDate = new Date();
@@ -104,15 +114,21 @@ const BookService = () => {
       toast.error("Bookings can only be made up to 3 months in advance");
       return;
     }
-    console.log(bookingData)
+    
+    // Convert local time to ISO string for backend (preserving the intended local time)
+    const localDateTime = new Date(bookingData.scheduledAt);
+    const bookingDataForBackend = {
+      ...bookingData,
+      scheduledAt: localDateTime.toISOString(),
+      totalPrice: calculateTotalPrice(),
+    };
+    
+    console.log(bookingDataForBackend)
     try {
       const response = await Axios({
         url: `/api/booking/create-booking/${serviceId}`,
         method: "post",
-        data: {
-          ...bookingData,
-          totalPrice: calculateTotalPrice(),
-        },
+        data: bookingDataForBackend,
       });
 
       if (response.data.success) {
@@ -138,6 +154,29 @@ const BookService = () => {
       lat: service.location.coordinates[1],
       lng: service.location.coordinates[0]
     };
+  };
+
+  // Helper function to format current time for min attribute
+  const getCurrentDateTimeLocal = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  // Helper function to format max date (3 months from now)
+  const getMaxDateTimeLocal = () => {
+    const maxDate = new Date();
+    maxDate.setMonth(maxDate.getMonth() + 3);
+    const year = maxDate.getFullYear();
+    const month = String(maxDate.getMonth() + 1).padStart(2, '0');
+    const day = String(maxDate.getDate()).padStart(2, '0');
+    const hours = String(maxDate.getHours()).padStart(2, '0');
+    const minutes = String(maxDate.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
   // Update the datetime-local input to show min and max dates
@@ -169,6 +208,15 @@ const BookService = () => {
             transition={{ delay: 0.3 }}
           >
             <div className="text-center">
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  onClick={() => navigate(`/services`)}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center gap-2"
+                >
+                  &larr; Back to Service
+                </button>
+                <div></div> {/* Spacer for centering */}
+              </div>
               <h2 className="text-3xl font-extrabold text-white mb-2">Book Your Service</h2>
               <p className="text-white/70">Fill in the details to schedule your service</p>
             </div>
@@ -280,6 +328,8 @@ const BookService = () => {
                 onChange={handleChange}
                 step="1800" // Set step to 30 minutes (1800 seconds)
                 className="w-full px-4 py-3 rounded-lg bg-gray-800/60 border border-gray-600 text-gray-200 placeholder-gray-400 focus:ring-2 focus:ring-green-500/50 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
+                min={getCurrentDateTimeLocal()}
+                max={getMaxDateTimeLocal()}
               />
             </motion.div>
 

@@ -11,12 +11,7 @@ const ChatPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-start pt-8">
-      <button
-        className="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 self-start ml-4"
-        onClick={() => navigate('/bookings')}
-      >
-        &larr; Back to Bookings
-      </button>
+      
       <ChatSection bookingId={bookingId} userId={userId} userRole={userRole} />
     </div>
   );
