@@ -51,14 +51,17 @@ const router = createBrowserRouter([
               { index: true, element: <Categories /> },
               { path: "recommendations", element: <Recommendation /> },
               { path: "bookings", element: <BookingsRoleBased /> },
-              { path: "chat/:bookingId", element: <ChatPage /> },
+              
               { path: "services", element: <Services /> },
               { path: "services/category/:categoryId", element: <CategoryServices /> },
               { path: "service/:serviceId", element: <ServiceDetails /> },
               { path: "review/:bookingId", element: <Review /> },
-              { path: "bot-chat", element: <BotChat /> },
+              
             ],
+            
           },
+          { path: "chat/:bookingId", element: <ChatPage /> },
+          { path: "bot-chat", element: <BotChat /> },
           { path: "book-service/:serviceId", element: <BookService /> },
         ],
       },
