@@ -4,8 +4,6 @@ import toast, { Toaster } from 'react-hot-toast';
 import { useEffect } from 'react';
 import { setUserDetails } from './store/userSlice';
 import { useDispatch } from 'react-redux';
-import Axios from './utils/Axios';
-import SummaryApi from './common/SummaryApi';
 
 import fetchUserDetails from './utils/fetchUserDetails';
 function App() {
