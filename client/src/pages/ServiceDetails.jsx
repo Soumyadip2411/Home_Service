@@ -33,8 +33,21 @@ const ServiceDetails = () => {
     }
   };
 
+  // Log view interaction when page loads
+  const logViewInteraction = async () => {
+    try {
+      await Axios.post(`/api/interactions/${serviceId}`, {
+        interactionType: "view"
+      });
+    } catch (error) {
+      console.error('Failed to log view interaction:', error);
+    }
+  };
+
   useEffect(() => {
     fetchServiceDetails();
+    // Log view interaction when page loads
+    logViewInteraction();
   }, [serviceId]);
 
   if (loading) {
@@ -53,7 +66,7 @@ const ServiceDetails = () => {
     );
   }
 
-  const handleBookService = () => {
+  const handleBookService = async () => {
     if (user._id === service.provider._id) {
       toast.error("You cannot book your own service!", {
         duration: 3000,
@@ -65,6 +78,16 @@ const ServiceDetails = () => {
       });
       return;
     }
+
+    // Log click interaction when "Book Now" is clicked
+    try {
+      await Axios.post(`/api/interactions/${serviceId}`, {
+        interactionType: "click"
+      });
+    } catch (error) {
+      console.error('Failed to log click interaction:', error);
+    }
+
     // Update tag profile for content-based filtering
     if (service.tags && service.tags.length > 0) {
       updateLocalTagProfile(service.tags, 'content');

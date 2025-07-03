@@ -83,14 +83,14 @@ export async function addInteraction(request, response) {
       
       let serviceBoost = 0, tagBoost = 0;
       if (interactionType === 'booking') {
-        serviceBoost = 10;
-        tagBoost = 4;
-      } else if (interactionType === 'click') {
-        serviceBoost = 6;
-        tagBoost = 2;
-      } else if (interactionType === 'view') {
-        serviceBoost = 3;
+        serviceBoost = 2;
         tagBoost = 1;
+      } else if (interactionType === 'click') {
+        serviceBoost = 1.6;
+        tagBoost = 0.4;
+      } else if (interactionType === 'view') {
+        serviceBoost = 1;
+        tagBoost = 0.3;
       }
       // Boost tags
       (service.tags || []).forEach(tag => {

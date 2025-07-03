@@ -5,7 +5,7 @@ import User from '../models/user.model.js';
 import natural from 'natural';
 
 const TAG_DECAY = 0.8;
-const TAG_BOOSTS = { bot: 1.0, content: 0.5, collab: 0.4 };
+const TAG_BOOSTS = { bot: 2.5, content: 1.8, collab: 0.4 };
 const TAG_THRESHOLD = 0.01; // Remove tags below this weight
 const TIME_DECAY_FACTOR = 0.95; // Daily decay factor
 const MAX_TAGS_PER_USER = 50; // Maximum tags to keep per user

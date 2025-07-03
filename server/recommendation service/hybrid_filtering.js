@@ -7,7 +7,7 @@ import Service from '../models/service.model.js';
 import Review from '../models/review.model.js';
 
 const weights = {
-  collaborative: 0.4,
+  collaborative: 0.3,
   content: 0.4,
   location: 0.1,
   popularity: 0.1
