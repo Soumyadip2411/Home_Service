@@ -3,9 +3,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import Axios from "../utils/Axios";
-import SummaryApi from "../common/SummaryApi";
-import { FiClock, FiMapPin, FiFileText, FiCalendar, FiDollarSign } from "react-icons/fi";
-import GoogleMapLocationPicker from "../components/GoogleMapLocationPicker";
+
+import { FiClock, FiMapPin, FiFileText, FiCalendar, FiDollarSign, FiCheck } from "react-icons/fi";
+
+import BookingProgress from "../components/BookingProgress";
 import { updateLocalTagProfile } from '../components/Recommendation';
 
 const BookService = () => {
@@ -13,7 +14,7 @@ const BookService = () => {
   const navigate = useNavigate();
   const [service, setService] = useState(null);
   const [showContact, setShowContact] = useState(false);
-  const [showMap, setShowMap] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
   const [bookingData, setBookingData] = useState({
     scheduledAt: "",
     location: "",
@@ -21,6 +22,14 @@ const BookService = () => {
     durationType: "hours", // hours, days, months
     duration: 1,
   });
+
+  // Custom steps for booking flow
+  const bookingSteps = [
+    { id: 1, title: 'Service Details', icon: FiClock, description: 'Select service and time' },
+    { id: 2, title: 'Location & Duration', icon: FiMapPin, description: 'Choose location and duration' },
+    { id: 3, title: 'Review & Confirm', icon: FiFileText, description: 'Review details and confirm' },
+    { id: 4, title: 'Booking Complete', icon: FiDollarSign, description: 'Booking confirmed' }
+  ];
 
   useEffect(() => {
     const fetchServiceDetails = async () => {
@@ -54,6 +63,7 @@ const BookService = () => {
       setShowContact(true);
     }
   };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === 'scheduledAt') {
@@ -95,8 +105,35 @@ const BookService = () => {
     return basePrice * multiplier[bookingData.durationType] * bookingData.duration;
   };
 
+  // Function to validate current step
+  const validateStep = (step) => {
+    switch (step) {
+      case 1:
+        return bookingData.scheduledAt !== "";
+      case 2:
+        return bookingData.location !== "" && bookingData.duration > 0;
+      case 3:
+        return true; // Review step is always valid
+      default:
+        return false;
+    }
+  };
+
+  // Function to go to next step
+  const nextStep = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(prev => Math.min(prev + 1, 4));
+    } else {
+      toast.error("Please fill in all required fields before proceeding");
+    }
+  };
+
+  // Function to go to previous step
+  const prevStep = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+  };
+
   const handleSubmit = async (e) => {
-    console.log("called")
     e.preventDefault();
 
     // Validate date - convert local time to Date object for comparison
@@ -123,7 +160,6 @@ const BookService = () => {
       totalPrice: calculateTotalPrice(),
     };
     
-    console.log(bookingDataForBackend)
     try {
       const response = await Axios({
         url: `/api/booking/create-booking/${serviceId}`,
@@ -139,8 +175,11 @@ const BookService = () => {
         if (service && service.tags && service.tags.length > 0) {
           updateLocalTagProfile(service.tags, 'content');
         }
+        setCurrentStep(4);
         toast.success("Booking created successfully!");
-        navigate(-1);
+        setTimeout(() => {
+          navigate(-1);
+        }, 2000);
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to create booking");
@@ -167,7 +206,7 @@ const BookService = () => {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
-  // Helper function to format max date (3 months from now)
+  // Helper function to format max date (3 months from now) for max attribute
   const getMaxDateTimeLocal = () => {
     const maxDate = new Date();
     maxDate.setMonth(maxDate.getMonth() + 3);
@@ -179,143 +218,20 @@ const BookService = () => {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
-  // Update the datetime-local input to show min and max dates
-  return (
-    <motion.div
-      className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 relative"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      style={{
-        backgroundImage: "url('https://images.unsplash.com/photo-1521783593447-5702b9bfd267?q=80&w=1470&auto=format&fit=crop')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center'
-      }}
-    >
-      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
-      
-      <div className="max-w-4xl mx-auto relative z-10">
-        <motion.div
-          className="bg-white/10 backdrop-blur-md py-8 px-6 shadow-2xl rounded-2xl border border-white/20"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <motion.div 
-            className="flex items-center justify-center mb-8"
-            initial={{ y: -20 }}
-            animate={{ y: 0 }}
-            transition={{ delay: 0.3 }}
+  // Render step content
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-6"
           >
-            <div className="text-center">
-              <div className="flex items-center justify-between mb-4">
-                <button
-                  onClick={() => navigate(`/services`)}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center gap-2"
-                >
-                  &larr; Back to Service
-                </button>
-                <div></div> {/* Spacer for centering */}
-              </div>
-              <h2 className="text-3xl font-extrabold text-white mb-2">Book Your Service</h2>
-              <p className="text-white/70">Fill in the details to schedule your service</p>
-            </div>
-          </motion.div>
-
-          {service && (
-            <motion.div 
-              className="mb-8 p-6 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md"
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.4 }}
-            >
-              <h3 className="text-xl font-semibold text-white mb-2">{service.title}</h3>
-              <p className="text-white/70 mb-4">{service.description}</p>
-              <div className="flex items-center justify-between text-white/90">
-                <span className="flex items-center">
-                  <FiDollarSign className="mr-2" />
-                  Base Price: ₹{service.price}/hour
-                </span>
-                <span className="flex items-center">
-                  <FiClock className="mr-2" />
-                  {service.duration}
-                </span>
-              </div>
-              
-              {/* Service Location Map */}
-              {getServiceLocation() && (
-                <div className="mt-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-lg font-semibold text-white flex items-center">
-                      <FiMapPin className="mr-2" />
-                      Service Location
-                    </h4>
-                    <button
-                      onClick={() => setShowMap(!showMap)}
-                      className="text-blue-400 hover:text-blue-300 text-sm font-medium"
-                    >
-                      {showMap ? 'Hide Map' : 'Show Map'}
-                    </button>
-                  </div>
-                  
-                  {showMap && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden"
-                    >
-                      <GoogleMapLocationPicker
-                        initialLocation={getServiceLocation()}
-                        showSearchBox={false}
-                        height="300px"
-                        readOnly={true}
-                        markers={[{
-                          lat: getServiceLocation().lat,
-                          lng: getServiceLocation().lng,
-                          title: service.title
-                        }]}
-                      />
-                    </motion.div>
-                  )}
-                </div>
-              )}
-              
-              {/* Add contact details section */}
-              {!showContact ? (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleContactClick}
-                  className="w-full mt-4 flex justify-center items-center py-3 px-6 rounded-xl text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 font-medium"
-                >
-                  See Contact Details
-                </motion.button>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="mt-4 p-4 bg-blue-500/20 rounded-lg border border-blue-500/30"
-                >
-                  <h4 className="text-lg font-semibold text-white mb-2">Provider Contact</h4>
-                  <p className="text-white/90">Email: {service?.provider?.email}</p>
-                  <p className="text-white/90">Phone: {service?.provider?.mobile}</p>
-                  <p className="text-sm text-white/70 mt-2">
-                    Please book the service to get full contact details
-                  </p>
-                </motion.div>
-              )}
-            </motion.div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
+            <h3 className="text-xl font-semibold text-white mb-4">Step 1: Service Details</h3>
+            
             {/* Date and Time Field */}
-            <motion.div
-              className="group"
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.5 }}
-            >
+            <div className="group">
               <label className="block text-sm font-medium text-white mb-2 flex items-center">
                 <FiCalendar className="mr-2" />
                 Schedule Date & Time
@@ -331,15 +247,21 @@ const BookService = () => {
                 min={getCurrentDateTimeLocal()}
                 max={getMaxDateTimeLocal()}
               />
-            </motion.div>
+            </div>
+          </motion.div>
+        );
 
+      case 2:
+        return (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-6"
+          >
+            <h3 className="text-xl font-semibold text-white mb-4">Step 2: Location & Duration</h3>
+            
             {/* Duration Selection */}
-            <motion.div
-              className="grid grid-cols-2 gap-4"
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.6 }}
-            >
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-white mb-2 flex items-center">
                   <FiClock className="mr-2" />
@@ -367,14 +289,10 @@ const BookService = () => {
                   className="w-full px-4 py-3 rounded-lg bg-gray-800/60 border border-gray-600 text-gray-200 focus:ring-2 focus:ring-green-500/50 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
                 />
               </div>
-            </motion.div>
+            </div>
 
             {/* Location Field */}
-            <motion.div
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.7 }}
-            >
+            <div>
               <label className="block text-sm font-medium text-white mb-2 flex items-center">
                 <FiMapPin className="mr-2" />
                 Service Location
@@ -388,14 +306,10 @@ const BookService = () => {
                 placeholder="Enter service location"
                 className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/20 text-white placeholder-white/50 focus:ring-2 focus:ring-green-500/50 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
               />
-            </motion.div>
+            </div>
 
             {/* Notes Field */}
-            <motion.div
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.8 }}
-            >
+            <div>
               <label className="block text-sm font-medium text-white mb-2 flex items-center">
                 <FiFileText className="mr-2" />
                 Additional Notes
@@ -408,33 +322,345 @@ const BookService = () => {
                 placeholder="Any special requirements or notes"
                 className="w-full px-4 py-3 rounded-lg bg-gray-800/60 border border-gray-600 text-gray-200 placeholder-gray-400 focus:ring-2 focus:ring-green-500/50 focus:border-transparent transition-all duration-300 backdrop-blur-sm resize-none"
               />
-            </motion.div>
+            </div>
+          </motion.div>
+        );
 
-            {/* Total Price Display */}
-            {service && (
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.9 }}
-                className="mt-6 p-6 rounded-xl bg-gradient-to-r from-green-500/20 to-blue-500/20 border border-white/20 backdrop-blur-md"
-              >
-                <div className="flex justify-between items-center">
-                  <h4 className="text-lg font-semibold text-white">Total Price</h4>
-                  <p className="text-3xl font-bold text-green-400">₹{calculateTotalPrice()}</p>
+      case 3:
+        return (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-6"
+          >
+            <h3 className="text-xl font-semibold text-white mb-4">Step 3: Review & Confirm</h3>
+            
+            {/* Review Summary */}
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+              <h4 className="text-lg font-semibold text-white mb-4">Booking Summary</h4>
+              
+              <div className="space-y-3 text-white/90">
+                <div className="flex justify-between">
+                  <span>Service:</span>
+                  <span className="font-medium">{service?.title}</span>
                 </div>
-              </motion.div>
+                <div className="flex justify-between">
+                  <span>Date & Time:</span>
+                  <span className="font-medium">
+                    {bookingData.scheduledAt ? new Date(bookingData.scheduledAt).toLocaleString() : 'Not set'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Location:</span>
+                  <span className="font-medium">{bookingData.location || 'Not set'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Duration:</span>
+                  <span className="font-medium">{bookingData.duration} {bookingData.durationType}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Total Price:</span>
+                  <span className="font-bold text-green-400">₹{calculateTotalPrice()}</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        );
+
+      case 4:
+        return (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center space-y-6"
+          >
+            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto">
+              <FiCheck className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold text-white">Booking Confirmed!</h3>
+            <p className="text-white/70">Your booking has been successfully created. You will receive a confirmation email shortly.</p>
+          </motion.div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <motion.div
+      className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 relative"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      style={{
+        backgroundImage: "url('https://images.unsplash.com/photo-1521783593447-5702b9bfd267?q=80&w=1470&auto=format&fit=crop')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }}
+    >
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
+      
+      <div className="max-w-4xl mx-auto relative z-10">
+        <motion.div
+          className="bg-white/20 dark:bg-gray-800/20 backdrop-blur-sm rounded-2xl p-8 shadow-xl"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          {/* Service Details Header */}
+          <div className="mb-8">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="flex items-center gap-4 mb-4"
+            >
+              <img
+                src={service?.provider?.avatar || `https://ui-avatars.com/api/?name=${service?.provider?.name}`}
+                alt={service?.provider?.name}
+                className="w-16 h-16 rounded-full object-cover ring-4 ring-green-500/30"
+              />
+              <div>
+                <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">{service?.title}</h1>
+                <p className="text-gray-600 dark:text-gray-400">by {service?.provider?.name}</p>
+              </div>
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-yellow-500">★</span>
+                <span>{service?.avgRating?.toFixed(1) || "New"} rating</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-green-500">₹</span>
+                <span className="font-semibold">{service?.price}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-blue-500">📍</span>
+                <span>{service?.distance?.toFixed(1)} km away</span>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Booking Progress */}
+          <BookingProgress currentStep={currentStep} totalSteps={4} />
+
+          {/* Step Content */}
+          <motion.div
+            key={currentStep}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+            className="mt-8"
+          >
+            {currentStep === 1 && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Service Details</h3>
+                  <div className="bg-white/50 dark:bg-gray-700/50 rounded-lg p-6">
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">{service?.description}</p>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-600 dark:text-gray-400">Category:</span>
+                        <span className="ml-2 text-gray-800 dark:text-gray-200">{service?.category?.name}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600 dark:text-gray-400">Price:</span>
+                        <span className="ml-2 text-green-600 dark:text-green-400 font-semibold">₹{service?.price}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end">
+                  <motion.button
+                    onClick={() => setCurrentStep(2)}
+                    className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Continue
+                  </motion.button>
+                </div>
+              </div>
             )}
 
-            {/* Submit Button */}
-            <motion.button
-              type="submit"
-              className="w-full flex justify-center items-center py-4 px-6 rounded-xl text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-300 font-medium text-lg backdrop-blur-sm"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              Confirm Booking
-            </motion.button>
-          </form>
+            {currentStep === 2 && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Select Date & Time</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Preferred Date
+                      </label>
+                      <input
+                        type="date"
+                        value={bookingData.date}
+                        onChange={(e) => setBookingData({ ...bookingData, date: e.target.value })}
+                        min={new Date().toISOString().split('T')[0]}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Preferred Time
+                      </label>
+                      <input
+                        type="time"
+                        value={bookingData.time}
+                        onChange={(e) => setBookingData({ ...bookingData, time: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-between">
+                  <motion.button
+                    onClick={() => setCurrentStep(1)}
+                    className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Back
+                  </motion.button>
+                  <motion.button
+                    onClick={() => setCurrentStep(3)}
+                    disabled={!bookingData.date || !bookingData.time}
+                    className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Continue
+                  </motion.button>
+                </div>
+              </div>
+            )}
+
+            {currentStep === 3 && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Additional Details</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Special Instructions
+                      </label>
+                      <textarea
+                        value={bookingData.instructions}
+                        onChange={(e) => setBookingData({ ...bookingData, instructions: e.target.value })}
+                        rows={4}
+                        placeholder="Any special requirements or instructions..."
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 resize-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Contact Phone
+                      </label>
+                      <input
+                        type="tel"
+                        value={bookingData.phone}
+                        onChange={(e) => setBookingData({ ...bookingData, phone: e.target.value })}
+                        placeholder="Your contact number"
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-between">
+                  <motion.button
+                    onClick={() => setCurrentStep(2)}
+                    className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Back
+                  </motion.button>
+                  <motion.button
+                    onClick={() => setCurrentStep(4)}
+                    className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Review & Book
+                  </motion.button>
+                </div>
+              </div>
+            )}
+
+            {currentStep === 4 && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Review & Confirm</h3>
+                  <div className="bg-white/50 dark:bg-gray-700/50 rounded-lg p-6 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="font-medium text-gray-600 dark:text-gray-400">Service:</span>
+                        <span className="ml-2 text-gray-800 dark:text-gray-200">{service?.title}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600 dark:text-gray-400">Provider:</span>
+                        <span className="ml-2 text-gray-800 dark:text-gray-200">{service?.provider?.name}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600 dark:text-gray-400">Date:</span>
+                        <span className="ml-2 text-gray-800 dark:text-gray-200">{bookingData.date}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600 dark:text-gray-400">Time:</span>
+                        <span className="ml-2 text-gray-800 dark:text-gray-200">{bookingData.time}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600 dark:text-gray-400">Price:</span>
+                        <span className="ml-2 text-green-600 dark:text-green-400 font-semibold">₹{service?.price}</span>
+                      </div>
+                      {bookingData.phone && (
+                        <div>
+                          <span className="font-medium text-gray-600 dark:text-gray-400">Phone:</span>
+                          <span className="ml-2 text-gray-800 dark:text-gray-200">{bookingData.phone}</span>
+                        </div>
+                      )}
+                    </div>
+                    {bookingData.instructions && (
+                      <div>
+                        <span className="font-medium text-gray-600 dark:text-gray-400">Instructions:</span>
+                        <p className="mt-1 text-gray-800 dark:text-gray-200">{bookingData.instructions}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex justify-between">
+                  <motion.button
+                    onClick={() => setCurrentStep(3)}
+                    className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Back
+                  </motion.button>
+                  <motion.button
+                    onClick={handleSubmit}
+                    className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Confirm Booking
+                  </motion.button>
+                </div>
+              </div>
+            )}
+          </motion.div>
         </motion.div>
       </div>
     </motion.div>

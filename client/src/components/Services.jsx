@@ -345,7 +345,7 @@ const Services = () => {
                 No services found
               </motion.div>
             ) : (
-              filteredServices.map((service) => {
+              filteredServices.map((service, index) => {
                 // Calculate distance for each service
                 const userLat = parseFloat(localStorage.getItem("userLat"));
                 const userLng = parseFloat(localStorage.getItem("userLng"));
@@ -364,68 +364,143 @@ const Services = () => {
                 return (
                   <motion.div
                     key={service._id}
-                    className="group backdrop-blur-sm bg-white/10 rounded-2xl overflow-hidden border border-white/20 hover:bg-white/20 transition-all duration-500 cursor-pointer"
+                    className="group relative backdrop-blur-sm bg-white/10 dark:bg-gray-800/10 rounded-2xl overflow-hidden border border-white/20 dark:border-gray-700/20 hover:bg-white/20 dark:hover:bg-gray-800/20 transition-all duration-500 cursor-pointer"
                     onClick={() => navigate(`/service/${service._id}`)}
                     variants={{
                       hidden: { y: 20, opacity: 0 },
                       visible: {
                         y: 0,
                         opacity: 1,
-                        transition: { type: "spring", stiffness: 100, damping: 12 }
+                        transition: { 
+                          type: "spring", 
+                          stiffness: 100, 
+                          damping: 12,
+                          delay: index * 0.1 
+                        }
                       }
                     }}
-                    whileHover={{ y: -5, scale: 1.02 }}
+                    whileHover={{ 
+                      y: -8, 
+                      scale: 1.02,
+                      transition: { type: "spring", stiffness: 300, damping: 20 }
+                    }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    <div className="p-6">
+                    {/* Popular Badge */}
+                    {service.avgRating && service.avgRating >= 4.5 && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.1 + 0.2 }}
+                        className="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg z-10"
+                      >
+                        ⭐ Popular
+                      </motion.div>
+                    )}
+
+                    {/* New Badge */}
+                    {!service.avgRating && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.1 + 0.2 }}
+                        className="absolute top-4 right-4 bg-gradient-to-r from-blue-400 to-purple-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg z-10"
+                      >
+                        🆕 New
+                      </motion.div>
+                    )}
+
+                    {/* Hover Overlay */}
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      initial={false}
+                    />
+
+                    <div className="p-6 relative z-10">
                       <div className="flex items-center gap-4 mb-4">
-                        <img
-                          src={service.provider?.avatar || `https://ui-avatars.com/api/?name=${service.provider?.name}`}
-                          alt={service.provider?.name}
-                          className="w-12 h-12 rounded-full object-cover ring-2 ring-green-500/30 group-hover:ring-green-500 transition-all duration-300"
-                        />
+                        <motion.div
+                          whileHover={{ scale: 1.1, rotate: 5 }}
+                          className="relative"
+                        >
+                          <img
+                            src={service.provider?.avatar || `https://ui-avatars.com/api/?name=${service.provider?.name}`}
+                            alt={service.provider?.name}
+                            className="w-12 h-12 rounded-full object-cover ring-2 ring-green-500/30 group-hover:ring-green-500 transition-all duration-300"
+                          />
+                          
+                          
+                        </motion.div>
                         <div>
-                          <h3 className="font-semibold text-lg text-gray-800">{service.title}</h3>
-                          <p className="text-sm text-gray-600">by {service.provider?.name}</p>
+                          <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
+                            {service.title}
+                          </h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors duration-300">
+                            by {service.provider?.name}
+                          </p>
                         </div>
                       </div>
                       
-                      {/* Add distance display here */}
-                      <div className="flex items-center gap-2 mb-4 text-gray-600">
-                        <FiMapPin className="text-green-500" />
-                        <span className="text-sm">{distanceText}</span>
-                      </div>
+                      {/* Enhanced Distance Display */}
+                      <motion.div 
+                        className="flex items-center gap-2 mb-4 text-gray-600 dark:text-gray-400"
+                        whileHover={{ x: 5 }}
+                        transition={{ type: "spring", stiffness: 300 }}
+                      >
+                        <FiMapPin className="text-green-500 group-hover:text-green-600 transition-colors duration-300" />
+                        <span className="text-sm font-medium">{distanceText}</span>
+                      </motion.div>
                       
-                      <p className="text-gray-600 mb-4 line-clamp-2 group-hover:line-clamp-none transition-all duration-300">
+                      <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 group-hover:line-clamp-none transition-all duration-300 group-hover:text-gray-700 dark:group-hover:text-gray-300">
                         {service.description}
                       </p>
                       
                       <div className="flex items-center justify-between mb-4">
-                        <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">
+                        <motion.span 
+                          className="text-2xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent"
+                          whileHover={{ scale: 1.05 }}
+                        >
                           ₹{service.price}
-                        </span>
-                        <div className="flex items-center gap-1 bg-yellow-100 px-3 py-1 rounded-full">
+                        </motion.span>
+                        <motion.div 
+                          className="flex items-center gap-1 bg-yellow-100 dark:bg-yellow-900/30 px-3 py-1 rounded-full group-hover:bg-yellow-200 dark:group-hover:bg-yellow-900/50 transition-colors duration-300"
+                          whileHover={{ scale: 1.05 }}
+                        >
                           <span className="text-yellow-500">★</span>
-                          <span className="text-yellow-700 font-medium">{service.avgRating?.toFixed(1) || "New"}</span>
-                        </div>
+                          <span className="text-yellow-700 dark:text-yellow-300 font-medium">{service.avgRating?.toFixed(1) || "New"}</span>
+                        </motion.div>
                       </div>
 
-                      <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-                        <span className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-600 font-medium">
-                          {service.category?.name}
-                        </span>
-                        <motion.button
+                      <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-600">
+                        <motion.span 
+                          className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-sm text-gray-600 dark:text-gray-300 font-medium group-hover:bg-gray-200 dark:group-hover:bg-gray-600 transition-colors duration-300"
                           whileHover={{ scale: 1.05 }}
+                        >
+                          {service.category?.name}
+                        </motion.span>
+                        <motion.button
+                          whileHover={{ 
+                            scale: 1.05,
+                            boxShadow: "0 10px 25px rgba(34, 197, 94, 0.3)"
+                          }}
                           whileTap={{ scale: 0.95 }}
                           onClick={(e) => {
                             e.stopPropagation();
                             navigate(`/book-service/${service._id}`);
                           }}
-                          className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg hover:from-green-700 hover:to-green-600 transition-all duration-300 shadow-md hover:shadow-lg"
+                          className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg hover:from-green-700 hover:to-green-600 transition-all duration-300 shadow-md hover:shadow-lg font-medium"
                         >
                           Book Now
                         </motion.button>
                       </div>
                     </div>
+
+                    {/* Ripple Effect on Click */}
+                    <motion.div
+                      className="absolute inset-0 bg-white/20 dark:bg-gray-600/20 rounded-2xl"
+                      initial={{ scale: 0, opacity: 0 }}
+                      whileTap={{ scale: 2, opacity: 0 }}
+                      transition={{ duration: 0.6 }}
+                    />
                   </motion.div>
                 );
               })
