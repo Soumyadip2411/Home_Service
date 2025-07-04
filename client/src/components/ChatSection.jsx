@@ -23,6 +23,7 @@ const ChatSection = ({ bookingId, userId, userRole }) => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const [chatPartnerName, setChatPartnerName] = useState('');
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
   const navigate = useNavigate();
@@ -38,6 +39,27 @@ const ChatSection = ({ bookingId, userId, userRole }) => {
     };
     fetchChatRoom();
   }, [bookingId]);
+
+  useEffect(() => {
+    const fetchChatPartnerName = async () => {
+      try {
+        let response;
+        if (userRole === 'PROVIDER') {
+          response = await axios.get(`/api/booking/customer-name/${bookingId}`);
+        } else {
+          response = await axios.get(`/api/booking/provider-name/${bookingId}`);
+        }
+        setChatPartnerName(response.data.data.name);
+      } catch (error) {
+        console.error('Error fetching chat partner name:', error);
+        setChatPartnerName(userRole === 'PROVIDER' ? 'Customer' : 'Provider');
+      }
+    };
+
+    if (bookingId) {
+      fetchChatPartnerName();
+    }
+  }, [bookingId, userRole]);
 
   useEffect(() => {
     if (!chatRoom) return;
@@ -108,8 +130,6 @@ const ChatSection = ({ bookingId, userId, userRole }) => {
     return <div className="p-4 text-center text-gray-500">No chat available for this booking.</div>;
   }
 
-  const chatPartner = userRole === 'PROVIDER' ? 'Client' : 'Provider';
-
   return (
     <div className="fixed inset-0 bg-gradient-to-b from-white to-gray-50 flex justify-center items-center px-4">
       
@@ -118,10 +138,10 @@ const ChatSection = ({ bookingId, userId, userRole }) => {
         
         <div className="flex items-center gap-3 px-5 py-4 bg-white border-b">
           <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold text-lg">
-            {getInitials(chatPartner)}
+            {getInitials(chatPartnerName)}
           </div>
           <div className="flex-1">
-            <h2 className="font-semibold text-gray-900 text-base">Chat with {chatPartner}</h2>
+            <h2 className="font-semibold text-gray-900 text-base">Chat with {chatPartnerName}</h2>
             <p className={`text-xs ${chatRoom.isActive ? 'text-green-600' : 'text-red-500'}`}>
               {chatRoom.isActive ? 'Active' : 'Closed'}
             </p>
@@ -154,7 +174,7 @@ const ChatSection = ({ bookingId, userId, userRole }) => {
                 <div key={msg._id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                   {!isMe && !isBot && (
                     <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-700 font-bold mr-2">
-                      {getInitials(chatPartner)}
+                      {getInitials(chatPartnerName)}
                     </div>
                   )}
                   {isBot && (

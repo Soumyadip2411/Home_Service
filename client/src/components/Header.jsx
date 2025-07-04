@@ -6,7 +6,7 @@ import { logout } from '../store/userSlice';
 import { toast } from 'react-hot-toast';
 import Axios from '../utils/Axios';
 import SummaryApi from '../common/SummaryApi';
-import { FiMapPin } from 'react-icons/fi';
+import { FiMapPin, FiChevronDown } from 'react-icons/fi';
 import { FaRobot } from 'react-icons/fa';
 
 const Header = () => {
@@ -22,7 +22,9 @@ const Header = () => {
   const [locationLoading, setLocationLoading] = useState(false);
   const [providerRequestLoading, setProviderRequestLoading] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showLocationMenu, setShowLocationMenu] = useState(false);
   const profileMenuRef = useRef(null);
+  const locationMenuRef = useRef(null);
 
   // Add handleLogout function
   const handleLogout = async () => {
@@ -52,6 +54,7 @@ const Header = () => {
   const getUserLocation = () => {
     setLocationLoading(true);
     setCurrentLocation('Getting your location...');
+    setShowLocationMenu(false); // Close dropdown when starting location update
     
     if (!navigator.geolocation) {
       setCurrentLocation('Geolocation not supported');
@@ -185,11 +188,14 @@ const Header = () => {
     }
   }, []);
 
-  // Hide dropdown when clicking outside
+  // Hide dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
         setShowProfileMenu(false);
+      }
+      if (locationMenuRef.current && !locationMenuRef.current.contains(event.target)) {
+        setShowLocationMenu(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -229,26 +235,61 @@ const Header = () => {
               )}
             </div>
 
-            {/* Location Display */}
-            <div className="flex items-center text-gray-300">
-              <FiMapPin className="text-green-500 mr-2" />
-              <span className="text-sm min-w-[120px]">
-                {locationLoading ? (
-                  <span className="flex items-center gap-1">
-                    <div className="w-3 h-3 border-t-2 border-green-500 rounded-full animate-spin"></div>
-                    Getting location...
-                  </span>
-                ) : (
-                  currentLocation
-                )}
-              </span>
+            {/* Location Dropdown */}
+            <div className="relative" ref={locationMenuRef}>
               <button
-                onClick={getUserLocation}
-                disabled={locationLoading}
-                className="ml-2 px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                onClick={() => setShowLocationMenu((prev) => !prev)}
+                className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
               >
-                {locationLoading ? 'Getting...' : 'Use My Location'}
+                <FiMapPin className="text-green-500" />
+                <span className="text-sm min-w-[120px] text-left">
+                  {locationLoading ? (
+                    <span className="flex items-center gap-1">
+                      <div className="w-3 h-3 border-t-2 border-green-500 rounded-full animate-spin"></div>
+                      Getting location...
+                    </span>
+                  ) : (
+                    currentLocation
+                  )}
+                </span>
+                <FiChevronDown className={`text-xs transition-transform ${showLocationMenu ? 'rotate-180' : ''}`} />
               </button>
+              
+              {/* Location Dropdown Menu */}
+              {showLocationMenu && (
+                <div className="absolute left-0 top-10 bg-white shadow-lg rounded-lg p-3 z-50 min-w-[200px]">
+                  <div className="mb-3">
+                    <h4 className="text-sm font-semibold text-gray-800 mb-2">Location Settings</h4>
+                    <p className="text-xs text-gray-600 mb-3">
+                      Current: {currentLocation}
+                    </p>
+                  </div>
+                  
+                  <button
+                    onClick={getUserLocation}
+                    disabled={locationLoading}
+                    className="w-full px-3 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                  >
+                    {locationLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-t-2 border-white rounded-full animate-spin"></div>
+                        Getting Location...
+                      </>
+                    ) : (
+                      <>
+                        <FiMapPin className="text-sm" />
+                        Use My Location
+                      </>
+                    )}
+                  </button>
+                  
+                  <div className="mt-2 pt-2 border-t border-gray-200">
+                    <p className="text-xs text-gray-500">
+                      This helps us show you relevant services nearby
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

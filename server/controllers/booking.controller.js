@@ -266,3 +266,71 @@ export async function createBooking(request, response) {
     });
   }
 }
+
+export const getCustomerNameByBookingId = async (request, response) => {
+  try {
+    const { bookingId } = request.params;
+    
+    const booking = await Booking.findById(bookingId)
+      .populate('customer', 'name email');
+    
+    if (!booking) {
+      return response.status(404).json({
+        message: "Booking not found",
+        success: false,
+        error: true,
+      });
+    }
+
+    return response.json({
+      message: "Customer name fetched successfully",
+      data: {
+        name: booking.customer.name,
+        email: booking.customer.email
+      },
+      success: true,
+      error: false,
+    });
+  } catch (error) {
+    console.error("Error in getCustomerNameByBookingId:", error);
+    return response.status(500).json({
+      message: "Failed to fetch customer name",
+      error: true,
+      success: false,
+    });
+  }
+};
+
+export const getProviderNameByBookingId = async (request, response) => {
+  try {
+    const { bookingId } = request.params;
+    
+    const booking = await Booking.findById(bookingId)
+      .populate('provider', 'name email');
+    
+    if (!booking) {
+      return response.status(404).json({
+        message: "Booking not found",
+        success: false,
+        error: true,
+      });
+    }
+
+    return response.json({
+      message: "Provider name fetched successfully",
+      data: {
+        name: booking.provider.name,
+        email: booking.provider.email
+      },
+      success: true,
+      error: false,
+    });
+  } catch (error) {
+    console.error("Error in getProviderNameByBookingId:", error);
+    return response.status(500).json({
+      message: "Failed to fetch provider name",
+      error: true,
+      success: false,
+    });
+  }
+};

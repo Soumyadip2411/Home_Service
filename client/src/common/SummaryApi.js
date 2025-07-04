@@ -58,6 +58,14 @@ const SummaryApi = {
     url: "/api/booking/create-booking",  // Fixed the URL
     method: "post",
   },
+  getCustomerNameByBookingId: {
+    url: "/api/booking/customer-name",
+    method: "get",
+  },
+  getProviderNameByBookingId: {
+    url: "/api/booking/provider-name",
+    method: "get",
+  },
   getAllCategories: {
     url: "/api/category/all",
     method: "get",
