@@ -44,12 +44,21 @@ const ChatSection = ({ bookingId, userId, userRole }) => {
     const fetchChatPartnerName = async () => {
       try {
         let response;
-        if (userRole === 'PROVIDER') {
-          response = await axios.get(`/api/booking/customer-name/${bookingId}`);
+        const endpoint = userRole === 'PROVIDER' 
+          ? `/api/bookings/customer-name/${bookingId}`
+          : `/api/bookings/provider-name/${bookingId}`;
+        
+        console.log('Fetching chat partner name from:', endpoint);
+        response = await axios.get(endpoint);
+        
+        console.log('Chat partner response:', response.data);
+        
+        if (response.data.success && response.data.data.name) {
+          setChatPartnerName(response.data.data.name);
         } else {
-          response = await axios.get(`/api/booking/provider-name/${bookingId}`);
+          console.error('No name found in response:', response.data);
+          setChatPartnerName(userRole === 'PROVIDER' ? 'Customer' : 'Provider');
         }
-        setChatPartnerName(response.data.data.name);
       } catch (error) {
         console.error('Error fetching chat partner name:', error);
         setChatPartnerName(userRole === 'PROVIDER' ? 'Customer' : 'Provider');
@@ -141,7 +150,9 @@ const ChatSection = ({ bookingId, userId, userRole }) => {
             {getInitials(chatPartnerName)}
           </div>
           <div className="flex-1">
-            <h2 className="font-semibold text-gray-900 text-base">Chat with {chatPartnerName}</h2>
+            <h2 className="font-semibold text-gray-900 text-base">
+              Chat with {chatPartnerName || (userRole === 'PROVIDER' ? 'Customer' : 'Provider')}
+            </h2>
             <p className={`text-xs ${chatRoom.isActive ? 'text-green-600' : 'text-red-500'}`}>
               {chatRoom.isActive ? 'Active' : 'Closed'}
             </p>
