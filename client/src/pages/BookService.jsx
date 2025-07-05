@@ -19,7 +19,9 @@ const BookService = () => {
     date: "",
     time: "",
     instructions: "",
-    phone: ""
+    phone: "",
+    durationType: "hours",
+    duration: 1
   });
   const [bookingLoading, setBookingLoading] = useState(false);
   
@@ -31,8 +33,8 @@ const BookService = () => {
 
   // Custom steps for booking flow
   const bookingSteps = [
-    { id: 1, title: 'Service Details', icon: FiClock, description: 'Select service and time' },
-    { id: 2, title: 'Location & Duration', icon: FiMapPin, description: 'Choose location and duration' },
+    { id: 1, title: 'Date & Time', icon: FiClock, description: 'Select date and time' },
+    { id: 2, title: 'Additional Details', icon: FiMapPin, description: 'Location and instructions' },
     { id: 3, title: 'Review & Confirm', icon: FiFileText, description: 'Review details and confirm' },
     { id: 4, title: 'Booking Complete', icon: FiDollarSign, description: 'Booking confirmed' }
   ];
@@ -100,16 +102,7 @@ const BookService = () => {
     }
   };
 
-  const calculateTotalPrice = () => {
-    if (!service) return 0;
-    const basePrice = service.price;
-    const multiplier = {
-      hours: 1,
-      days: 8,
-      months: 240,
-    };
-    return basePrice * multiplier[bookingData.durationType] * bookingData.duration;
-  };
+
 
   // Function to validate current step
   const validateStep = (step) => {
@@ -117,7 +110,7 @@ const BookService = () => {
       case 1:
         return bookingData.scheduledAt !== "";
       case 2:
-        return bookingData.location !== "" && bookingData.duration > 0;
+        return bookingData.location !== "";
       case 3:
         return true; // Review step is always valid
       default:
@@ -158,19 +151,26 @@ const BookService = () => {
       return;
     }
     
-    // Convert local time to ISO string for backend (preserving the intended local time)
+    // Convert local time to date and time format for backend
     const localDateTime = new Date(bookingData.scheduledAt);
+    const date = localDateTime.toISOString().split('T')[0];
+    const time = localDateTime.toTimeString().split(' ')[0];
+    
     const bookingDataForBackend = {
-      ...bookingData,
-      scheduledAt: localDateTime.toISOString(),
-      totalPrice: calculateTotalPrice(),
+      date: date,
+      time: time,
+      instructions: bookingData.instructions || "",
+      phone: bookingData.phone || ""
     };
     
     try {
       const response = await Axios({
-        url: `/api/booking/create-booking/${serviceId}`,
+        url: `/api/bookings`,
         method: "post",
-        data: bookingDataForBackend,
+        data: {
+          serviceId,
+          ...bookingDataForBackend
+        },
       });
 
       if (response.data.success) {
@@ -300,34 +300,7 @@ const BookService = () => {
     });
   };
 
-  const handleBooking = async () => {
-    if (!bookingData.date || !bookingData.time) {
-      toast.error("Please select a date and time");
-      return;
-    }
 
-    try {
-      setBookingLoading(true);
-      const response = await Axios.post("/api/bookings", {
-        serviceId,
-        date: bookingData.date,
-        time: bookingData.time,
-        instructions: bookingData.instructions,
-        phone: bookingData.phone
-      });
-
-      if (response.data.success) {
-        toast.success("Booking confirmed successfully!");
-        navigate("/bookings");
-      } else {
-        toast.error(response.data.message || "Booking failed");
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Booking failed");
-    } finally {
-      setBookingLoading(false);
-    }
-  };
 
   // Render step content
   const renderStepContent = () => {
@@ -339,7 +312,7 @@ const BookService = () => {
             animate={{ opacity: 1, x: 0 }}
             className="space-y-6"
           >
-            <h3 className="text-xl font-semibold text-white mb-4">Step 1: Service Details</h3>
+            <h3 className="text-xl font-semibold text-white mb-4">Step 1: Date & Time</h3>
             
             {/* Date and Time Field */}
             <div className="group">
@@ -369,39 +342,8 @@ const BookService = () => {
             animate={{ opacity: 1, x: 0 }}
             className="space-y-6"
           >
-            <h3 className="text-xl font-semibold text-white mb-4">Step 2: Location & Duration</h3>
+            <h3 className="text-xl font-semibold text-white mb-4">Step 2: Additional Details</h3>
             
-            {/* Duration Selection */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-white mb-2 flex items-center">
-                  <FiClock className="mr-2" />
-                  Duration Type
-                </label>
-                <select
-                  name="durationType"
-                  value={bookingData.durationType}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg bg-gray-800/60 border border-gray-600 text-gray-200 focus:ring-2 focus:ring-green-500/50 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
-                >
-                  <option value="hours" className="bg-gray-800">Hours</option>
-                  <option value="days" className="bg-gray-800">Days</option>
-                  <option value="months" className="bg-gray-800">Months</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">Duration</label>
-                <input
-                  type="number"
-                  name="duration"
-                  min="1"
-                  value={bookingData.duration}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg bg-gray-800/60 border border-gray-600 text-gray-200 focus:ring-2 focus:ring-green-500/50 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
-                />
-              </div>
-            </div>
-
             {/* Location Field */}
             <div>
               <label className="block text-sm font-medium text-white mb-2 flex items-center">
@@ -419,19 +361,34 @@ const BookService = () => {
               />
             </div>
 
-            {/* Notes Field */}
+            {/* Instructions Field */}
             <div>
               <label className="block text-sm font-medium text-white mb-2 flex items-center">
                 <FiFileText className="mr-2" />
-                Additional Notes
+                Special Instructions
               </label>
               <textarea
-                name="notes"
+                name="instructions"
                 rows="3"
-                value={bookingData.notes}
+                value={bookingData.instructions}
                 onChange={handleChange}
-                placeholder="Any special requirements or notes"
+                placeholder="Any special requirements or instructions"
                 className="w-full px-4 py-3 rounded-lg bg-gray-800/60 border border-gray-600 text-gray-200 placeholder-gray-400 focus:ring-2 focus:ring-green-500/50 focus:border-transparent transition-all duration-300 backdrop-blur-sm resize-none"
+              />
+            </div>
+
+            {/* Phone Field */}
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                Contact Phone
+              </label>
+              <input
+                type="tel"
+                name="phone"
+                value={bookingData.phone}
+                onChange={handleChange}
+                placeholder="Your contact number"
+                className="w-full px-4 py-3 rounded-lg bg-gray-800/60 border border-gray-600 text-gray-200 placeholder-gray-400 focus:ring-2 focus:ring-green-500/50 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
               />
             </div>
           </motion.div>
@@ -462,17 +419,29 @@ const BookService = () => {
                   </span>
                 </div>
                 <div className="flex justify-between">
+                  <span>Duration:</span>
+                  <span className="font-medium">{service?.duration} hour{service?.duration !== 1 ? 's' : ''}</span>
+                </div>
+                <div className="flex justify-between">
                   <span>Location:</span>
                   <span className="font-medium">{bookingData.location || 'Not set'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Duration:</span>
-                  <span className="font-medium">{bookingData.duration} {bookingData.durationType}</span>
+                  <span>Price:</span>
+                  <span className="font-bold text-green-400">₹{service?.price}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Total Price:</span>
-                  <span className="font-bold text-green-400">₹{calculateTotalPrice()}</span>
-                </div>
+                {bookingData.instructions && (
+                  <div className="flex justify-between">
+                    <span>Instructions:</span>
+                    <span className="font-medium">{bookingData.instructions}</span>
+                  </div>
+                )}
+                {bookingData.phone && (
+                  <div className="flex justify-between">
+                    <span>Phone:</span>
+                    <span className="font-medium">{bookingData.phone}</span>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>
@@ -585,7 +554,7 @@ const BookService = () => {
                   <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Service Details</h3>
                   <div className="bg-white/50 dark:bg-gray-700/50 rounded-lg p-6">
                     <p className="text-gray-700 dark:text-gray-300 mb-4">{service?.description}</p>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="grid grid-cols-3 gap-4 text-sm">
                       <div>
                         <span className="font-medium text-gray-600 dark:text-gray-400">Category:</span>
                         <span className="ml-2 text-gray-800 dark:text-gray-200">{service?.category?.name}</span>
@@ -593,6 +562,10 @@ const BookService = () => {
                       <div>
                         <span className="font-medium text-gray-600 dark:text-gray-400">Price:</span>
                         <span className="ml-2 text-green-600 dark:text-green-400 font-semibold">₹{service?.price}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600 dark:text-gray-400">Duration:</span>
+                        <span className="ml-2 text-blue-600 dark:text-blue-400 font-semibold">{service?.duration} hour{service?.duration !== 1 ? 's' : ''}</span>
                       </div>
                     </div>
                   </div>
@@ -829,6 +802,10 @@ const BookService = () => {
                       <div>
                         <span className="font-medium text-gray-600 dark:text-gray-400">Time:</span>
                         <span className="ml-2 text-gray-800 dark:text-gray-200">{bookingData.time}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600 dark:text-gray-400">Duration:</span>
+                        <span className="ml-2 text-blue-600 dark:text-blue-400 font-semibold">{service?.duration} hour{service?.duration !== 1 ? 's' : ''}</span>
                       </div>
                       <div>
                         <span className="font-medium text-gray-600 dark:text-gray-400">Price:</span>

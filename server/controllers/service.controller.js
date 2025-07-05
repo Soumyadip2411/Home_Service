@@ -265,7 +265,7 @@ export const getServiceAvailability = async (req, res) => {
       slotStartTime.setHours(hour, 0, 0, 0);
       
       const slotEndTime = new Date(selectedDate);
-      slotEndTime.setHours(hour + 1, 0, 0, 0); // 1 hour duration
+      slotEndTime.setHours(hour + service.duration, 0, 0, 0); // Use service duration
       
       // Add relaxation time (30 minutes before and after)
       const relaxationTime = 30; // minutes
@@ -275,6 +275,18 @@ export const getServiceAvailability = async (req, res) => {
       const slotEndWithRelaxation = new Date(slotEndTime);
       slotEndWithRelaxation.setMinutes(slotEndWithRelaxation.getMinutes() + relaxationTime);
 
+      // Check if the slot would extend beyond working hours
+      const slotEndHour = hour + service.duration;
+      if (slotEndHour > workingHours.end) {
+        timeSlots.push({
+          time: timeString,
+          available: false,
+          booked: true,
+          conflictReason: "Extends beyond working hours"
+        });
+        continue;
+      }
+
       // Check for conflicts with existing bookings
       let isAvailable = true;
       let conflictReason = null;
@@ -282,7 +294,7 @@ export const getServiceAvailability = async (req, res) => {
       for (const booking of existingBookings) {
         const bookingStartTime = new Date(`${booking.date}T${booking.time}`);
         const bookingEndTime = new Date(bookingStartTime);
-        bookingEndTime.setHours(bookingStartTime.getHours() + 1); // Assume 1 hour duration
+        bookingEndTime.setHours(bookingStartTime.getHours() + service.duration); // Use service duration
 
         // Check if there's any overlap
         if (
@@ -313,7 +325,7 @@ export const getServiceAvailability = async (req, res) => {
     res.status(200).json({
       success: true,
       availableSlots: timeSlots,
-      serviceDuration: service.duration || "1 hour",
+      serviceDuration: service.duration,
       workingHours: {
         start: workingHours.start,
         end: workingHours.end

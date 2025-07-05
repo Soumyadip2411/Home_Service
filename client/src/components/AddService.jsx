@@ -38,7 +38,14 @@ const AddService = () => {
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value, type } = e.target;
+    
+    // Convert number inputs to actual numbers
+    if (type === 'number') {
+      setFormData({ ...formData, [name]: value === '' ? '' : parseFloat(value) });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleLocationSelect = (location) => {
@@ -80,6 +87,13 @@ const AddService = () => {
     // Validate location
     if (!selectedLocation) {
       toast.error("Please select a location on the map");
+      return;
+    }
+
+    // Validate duration
+    const duration = parseFloat(formData.duration);
+    if (isNaN(duration) || duration < 0.5 || duration > 3) {
+      toast.error("Duration must be between 0.5 and 3 hours");
       return;
     }
 
@@ -151,11 +165,14 @@ const AddService = () => {
             required
           />
           <input
-            type="text"
+            type="number"
             name="duration"
-            placeholder="Duration (e.g., 2 hours)"
+            placeholder="Duration (hours)"
             value={formData.duration}
             onChange={handleChange}
+            min="0.5"
+            max="3"
+            step="0.5"
             className="border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             required
           />

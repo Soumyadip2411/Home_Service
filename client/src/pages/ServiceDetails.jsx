@@ -119,7 +119,7 @@ const ServiceDetails = () => {
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-white/80">
                 <FiClock />
-                <span>Duration: {service.duration}</span>
+                <span>Duration: {service.duration} hour{service.duration !== 1 ? 's' : ''}</span>
               </div>
               <div className="flex items-center gap-2 text-white/80">
                 <FiMapPin />

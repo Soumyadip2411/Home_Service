@@ -126,7 +126,7 @@ const formatStatusText = (status) => {
 };
 
 
-export const bookingNotificationTemplate = ({ providerName, customerName, serviceTitle, scheduledAt, location, notes }) => {
+export const bookingNotificationTemplate = ({ providerName, customerName, serviceTitle, scheduledAt, location, notes, duration }) => {
   return `
   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 30px; background-color: #f9f9f9;">
     <h2 style="color: #333;">New Booking Request</h2>
@@ -139,6 +139,7 @@ export const bookingNotificationTemplate = ({ providerName, customerName, servic
       <p><strong>Customer Name:</strong> ${customerName}</p>
       <p><strong>Service:</strong> ${serviceTitle}</p>
       <p><strong>Scheduled Date:</strong> ${new Date(scheduledAt).toLocaleString()}</p>
+      <p><strong>Duration:</strong> ${duration} hour${duration !== 1 ? 's' : ''}</p>
       <p><strong>Location:</strong> ${location}</p>
       ${notes ? `<p><strong>Notes:</strong> ${notes}</p>` : ""}
     </div>

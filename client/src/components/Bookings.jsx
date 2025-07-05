@@ -175,7 +175,7 @@ const Bookings = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-3 gap-4 mb-4">
                 <div>
                   <p className="text-gray-600">Scheduled for:</p>
                   <p className="font-medium">
@@ -197,6 +197,12 @@ const Bookings = () => {
                   <p className="text-gray-600">Provider:</p>
                   <p className="font-medium">
                     {booking.provider?.name || "Provider not found"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Duration:</p>
+                  <p className="font-medium">
+                    {booking.service?.duration ? `${booking.service.duration} hour${booking.service.duration !== 1 ? 's' : ''}` : "N/A"}
                   </p>
                 </div>
               </div>

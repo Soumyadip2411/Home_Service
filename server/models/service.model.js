@@ -4,7 +4,13 @@ const serviceSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: String,
   price: { type: Number, required: true },
-  duration: String,
+  duration: { 
+    type: Number, 
+    required: true,
+    min: 0.5,
+    max: 3,
+    default: 1
+  },
   location: {
     type: {
       type: String,

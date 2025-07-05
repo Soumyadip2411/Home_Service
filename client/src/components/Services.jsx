@@ -455,12 +455,21 @@ const Services = () => {
                       </p>
                       
                       <div className="flex items-center justify-between mb-4">
-                        <motion.span 
-                          className="text-2xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent"
-                          whileHover={{ scale: 1.05 }}
-                        >
-                          ₹{service.price}
-                        </motion.span>
+                        <div className="flex items-center gap-4">
+                          <motion.span 
+                            className="text-2xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent"
+                            whileHover={{ scale: 1.05 }}
+                          >
+                            ₹{service.price}
+                          </motion.span>
+                          <motion.div 
+                            className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-full group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors duration-300"
+                            whileHover={{ scale: 1.05 }}
+                          >
+                            <FiClock className="w-4 h-4 text-blue-500" />
+                            <span className="text-blue-700 dark:text-blue-300 font-medium">{service.duration} hr{service.duration !== 1 ? 's' : ''}</span>
+                          </motion.div>
+                        </div>
                         <motion.div 
                           className="flex items-center gap-1 bg-yellow-100 dark:bg-yellow-900/30 px-3 py-1 rounded-full group-hover:bg-yellow-200 dark:group-hover:bg-yellow-900/50 transition-colors duration-300"
                           whileHover={{ scale: 1.05 }}

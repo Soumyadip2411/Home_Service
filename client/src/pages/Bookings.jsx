@@ -25,7 +25,7 @@ const Bookings = () => {
         });
 
         if (response.data.success) {
-          console.log("Bookings data:", response.data.data); // Debug log
+     
           setBookings(response.data.data);
         }
       } catch (error) {
@@ -39,6 +39,10 @@ const Bookings = () => {
   }, []);
 
   const handleReviewClick = (booking) => {
+    if (!booking.service?._id) {
+      toast.error("Service information not available for review");
+      return;
+    }
     navigate(`/review/${booking._id}`, {
       state: { serviceId: booking.service._id }
     });
@@ -55,26 +59,60 @@ const Bookings = () => {
   return (
     <div className="container mx-auto p-4">
       <h2 className="text-2xl font-bold mb-6">Your Bookings</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {bookings.map((booking) => (
+      {bookings.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500 text-lg">No bookings found</p>
+          <button
+            onClick={() => navigate('/services')}
+            className="mt-4 px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+          >
+            Browse Services
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {bookings.map((booking) => (
           <motion.div
             key={booking._id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 relative"
           >
-            <h3 className="text-xl font-semibold mb-4">{booking.service.title}</h3>
+            <h3 className="text-xl font-semibold mb-4">{booking.service?.title || "Service not found"}</h3>
             <div className="space-y-2 mb-4">
               <p className="flex items-center">
                 <FiClock className="mr-2" />
-                {new Date(booking.scheduledAt).toLocaleDateString()}
+                {booking.date && booking.time 
+                  ? (() => {
+                      const dateTime = `${booking.date}T${booking.time}`;
+                      const parsedDate = new Date(dateTime);
+                      return !isNaN(parsedDate) 
+                        ? parsedDate.toLocaleDateString()
+                        : "Invalid date format";
+                    })()
+                  : booking.scheduledAt 
+                    ? new Date(booking.scheduledAt).toLocaleDateString()
+                    : "Date not set"
+                }
               </p>
               <p className="flex items-center">
                 <FiMapPin className="mr-2" />
-                {booking.location}
+                {booking.location || "Location not specified"}
+              </p>
+              <p className="text-sm">
+                Provider: {booking.provider?.name || "Provider not found"}
+              </p>
+              <p className="text-sm">
+                Duration: {booking.service?.duration ? `${booking.service.duration} hour${booking.service.duration !== 1 ? 's' : ''}` : "N/A"}
+              </p>
+              <p className="text-sm">
+                Price: ₹{booking.service?.price || "N/A"}
               </p>
               <p className={`text-sm inline-block px-3 py-1 rounded-full ${
-                booking.status === "completed" ? "bg-green-500/20" : "bg-white/20"
+                booking.status === "completed" ? "bg-green-500/20" : 
+                booking.status === "confirmed" ? "bg-blue-500/20" :
+                booking.status === "cancelled" ? "bg-red-500/20" :
+                "bg-yellow-500/20"
               }`}>
                 Status: {booking.status}
               </p>
@@ -101,10 +139,11 @@ const Bookings = () => {
               </button>
             )}
           </motion.div>
-        ))}
+                    ))}
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
 };
 
 export default Bookings;

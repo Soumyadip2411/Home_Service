@@ -22,7 +22,7 @@ export const getBookings = async (request, response) => {
     const bookings = await Booking.find(query)
       .populate('customer', 'name email')
       .populate('provider', 'name email')
-      .populate('service', 'title price _id') // Make sure _id is included
+      .populate('service', 'title price duration _id') // Make sure _id is included
       .sort({ createdAt: -1 });
 
     // Check for existing reviews
@@ -62,7 +62,7 @@ export const getMyBookings = async (request, response) => {
     
     // Inside getBookings function
     const bookings = await Booking.find({ customer: userId })
-      .populate('service')
+      .populate('service', 'title price duration')
       .populate('provider', 'name email')
       .sort({ createdAt: -1 });
 
@@ -234,7 +234,7 @@ export async function createBooking(request, response) {
     const relaxationTime = 30; // minutes
     const bookingStartTime = new Date(bookingDateTime);
     const bookingEndTime = new Date(bookingDateTime);
-    bookingEndTime.setHours(bookingEndTime.getHours() + 1); // 1 hour duration
+    bookingEndTime.setHours(bookingEndTime.getHours() + service.duration); // Use service duration
 
     const slotStartWithRelaxation = new Date(bookingStartTime);
     slotStartWithRelaxation.setMinutes(slotStartWithRelaxation.getMinutes() - relaxationTime);
@@ -254,7 +254,7 @@ export async function createBooking(request, response) {
     for (const booking of existingBookings) {
       const existingBookingTime = new Date(`${booking.date}T${booking.time}`);
       const existingBookingEndTime = new Date(existingBookingTime);
-      existingBookingEndTime.setHours(existingBookingEndTime.getHours() + 1);
+      existingBookingEndTime.setHours(existingBookingEndTime.getHours() + service.duration); // Use service duration
 
       // Check if there's any overlap with relaxation time
       if (
@@ -291,7 +291,7 @@ export async function createBooking(request, response) {
     const populatedBooking = await Booking.findById(booking._id)
       .populate("customer", "name email")
       .populate("provider", "name email")
-      .populate("service", "title price");
+      .populate("service", "title price duration");
 
     // Send email notification to provider
     const provider = await User.findById(service.provider);
@@ -301,6 +301,7 @@ export async function createBooking(request, response) {
         customerName: populatedBooking.customer.name,
         serviceTitle: service.title,
         scheduledAt: `${date} at ${time}`,
+        duration: service.duration,
         location: "Customer's location",
         notes: instructions || "No special instructions"
       });
