@@ -17,31 +17,53 @@ const Review = () => {
   useEffect(() => {
     const fetchBookingDetails = async () => {
       try {
+        console.log("Fetching booking with ID:", bookingId);
+        
         const response = await Axios({
-          url: `/api/booking/get-bookings`,
+          url: `/api/bookings/${bookingId}`,
           method: "get",
         });
 
         if (response.data.success) {
-          const foundBooking = response.data.data.find(
-            (b) => b._id === bookingId
-          );
-          if (foundBooking) {
-            setBooking(foundBooking);
-          } else {
-            toast.error("Booking not found");
+          const foundBooking = response.data.data;
+          
+          // Check if the booking is completed and can be reviewed
+          if (foundBooking.status !== "completed") {
+            toast.error("Only completed bookings can be reviewed");
             navigate("/bookings");
+            return;
           }
+          if (foundBooking.hasReview) {
+            toast.error("You have already reviewed this booking");
+            navigate("/bookings");
+            return;
+          }
+          setBooking(foundBooking);
+        } else {
+          toast.error("Failed to fetch booking data");
+          navigate("/bookings");
         }
       } catch (error) {
-        toast.error("Failed to fetch booking details");
+        console.error("Error fetching booking details:", error);
+        if (error.response?.status === 404) {
+          toast.error("Booking not found");
+        } else if (error.response?.status === 403) {
+          toast.error("You don't have permission to access this booking");
+        } else {
+          toast.error("Failed to fetch booking details");
+        }
         navigate("/bookings");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchBookingDetails();
+    if (bookingId) {
+      fetchBookingDetails();
+    } else {
+      toast.error("Invalid booking ID");
+      navigate("/bookings");
+    }
   }, [bookingId, navigate]);
 
   const handleSubmit = async (e) => {
@@ -55,6 +77,11 @@ const Review = () => {
       }
       if (!booking || !booking.service) {
         return toast.error("Invalid booking data");
+      }
+
+      // Additional validation
+      if (booking.status !== "completed") {
+        return toast.error("Only completed bookings can be reviewed");
       }
 
       const response = await Axios({

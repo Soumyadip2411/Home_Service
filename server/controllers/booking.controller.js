@@ -395,3 +395,57 @@ export const getProviderNameByBookingId = async (request, response) => {
     });
   }
 };
+
+export const getBookingById = async (request, response) => {
+  try {
+    const userId = request.userId;
+    const { bookingId } = request.params;
+    
+    const booking = await Booking.findById(bookingId)
+      .populate('customer', 'name email')
+      .populate('provider', 'name email')
+      .populate('service', 'title price duration _id');
+    
+    if (!booking) {
+      return response.status(404).json({
+        message: "Booking not found",
+        success: false,
+        error: true,
+      });
+    }
+
+    // Check if the user has access to this booking
+    if (booking.customer._id.toString() !== userId && booking.provider._id.toString() !== userId) {
+      return response.status(403).json({
+        message: "You don't have permission to access this booking",
+        success: false,
+        error: true,
+      });
+    }
+
+    // Check for existing review
+    const review = await Review.findOne({
+      service: booking.service._id,
+      user: userId
+    });
+    
+    const bookingWithReviewStatus = {
+      ...booking.toObject(),
+      hasReview: !!review
+    };
+
+    return response.json({
+      message: "Booking fetched successfully",
+      data: bookingWithReviewStatus,
+      success: true,
+      error: false,
+    });
+  } catch (error) {
+    console.error("Error in getBookingById:", error);
+    return response.status(500).json({
+      message: "Failed to fetch booking",
+      error: true,
+      success: false,
+    });
+  }
+};
