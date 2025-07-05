@@ -74,8 +74,8 @@ const BookService = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'scheduledAt') {
-      // Round the selected time to the nearest 30-minute interval
+    if (name === 'dateTime') {
+      // Handle datetime-local input
       const date = new Date(value);
       const minutes = date.getMinutes();
       const roundedMinutes = Math.round(minutes / 30) * 30;
@@ -83,19 +83,14 @@ const BookService = () => {
       date.setSeconds(0);
       date.setMilliseconds(0);
       
-      // Format date in local timezone for datetime-local input
-      const formatLocalDateTime = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-      };
+      // Extract date and time separately
+      const dateStr = date.toISOString().split('T')[0];
+      const timeStr = date.toTimeString().split(' ')[0];
       
       setBookingData(prev => ({
         ...prev,
-        [name]: formatLocalDateTime(date)
+        date: dateStr,
+        time: timeStr
       }));
     } else {
       setBookingData(prev => ({ ...prev, [name]: value }));
@@ -108,7 +103,7 @@ const BookService = () => {
   const validateStep = (step) => {
     switch (step) {
       case 1:
-        return bookingData.scheduledAt !== "";
+        return bookingData.date !== "" && bookingData.time !== "";
       case 2:
         return bookingData.location !== "";
       case 3:
@@ -135,30 +130,38 @@ const BookService = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate date - convert local time to Date object for comparison
-    const selectedDate = new Date(bookingData.scheduledAt);
+    // Check if date and time are provided
+    if (!bookingData.date || !bookingData.time) {
+      toast.error("Please select a date and time");
+      return;
+    }
+
+    // Validate date - convert to Date object for comparison
+    const selectedDateTime = new Date(`${bookingData.date}T${bookingData.time}`);
+    
+    // Check if the date is valid
+    if (isNaN(selectedDateTime.getTime())) {
+      toast.error("Please select a valid date and time");
+      return;
+    }
+    
     const now = new Date();
     const maxDate = new Date();
     maxDate.setMonth(maxDate.getMonth() + 3); // Allow bookings up to 3 months in advance
 
-    if (selectedDate < now) {
+    if (selectedDateTime < now) {
       toast.error("Please select a future date and time");
       return;
     }
 
-    if (selectedDate > maxDate) {
+    if (selectedDateTime > maxDate) {
       toast.error("Bookings can only be made up to 3 months in advance");
       return;
     }
     
-    // Convert local time to date and time format for backend
-    const localDateTime = new Date(bookingData.scheduledAt);
-    const date = localDateTime.toISOString().split('T')[0];
-    const time = localDateTime.toTimeString().split(' ')[0];
-    
     const bookingDataForBackend = {
-      date: date,
-      time: time,
+      date: bookingData.date,
+      time: bookingData.time,
       instructions: bookingData.instructions || "",
       phone: bookingData.phone || ""
     };
@@ -249,6 +252,13 @@ const BookService = () => {
   const fetchAvailableSlots = async (date) => {
     try {
       setLoadingSlots(true);
+      
+      // Validate the date before using toISOString
+      if (!date || isNaN(date.getTime())) {
+        console.error('Invalid date provided to fetchAvailableSlots');
+        return;
+      }
+      
       const response = await Axios.get(`/api/service/${serviceId}/availability`, {
         params: {
           date: date.toISOString().split('T')[0]
@@ -269,6 +279,11 @@ const BookService = () => {
   };
 
   const handleDateSelect = (date) => {
+    if (!date || isNaN(date.getTime())) {
+      console.error('Invalid date provided to handleDateSelect');
+      return;
+    }
+    
     setSelectedDate(date);
     setBookingData(prev => ({ ...prev, date: date.toISOString().split('T')[0] }));
     fetchAvailableSlots(date);
@@ -312,25 +327,134 @@ const BookService = () => {
             animate={{ opacity: 1, x: 0 }}
             className="space-y-6"
           >
-            <h3 className="text-xl font-semibold text-white mb-4">Step 1: Date & Time</h3>
+            <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Select Date & Time</h3>
             
-            {/* Date and Time Field */}
-            <div className="group">
-              <label className="block text-sm font-medium text-white mb-2 flex items-center">
-                <FiCalendar className="mr-2" />
-                Schedule Date & Time
-              </label>
-              <input
-                type="datetime-local"
-                name="scheduledAt"
-                required
-                value={bookingData.scheduledAt}
-                onChange={handleChange}
-                step="1800" // Set step to 30 minutes (1800 seconds)
-                className="w-full px-4 py-3 rounded-lg bg-gray-800/60 border border-gray-600 text-gray-200 placeholder-gray-400 focus:ring-2 focus:ring-green-500/50 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
-                min={getCurrentDateTimeLocal()}
-                max={getMaxDateTimeLocal()}
-              />
+            {/* Calendar Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Calendar */}
+              <div className="bg-white/50 rounded-lg p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h4 className="text-lg font-semibold text-gray-800">Select Date</h4>
+                  <div className="flex items-center gap-2">
+                    <motion.button
+                      onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
+                      className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <FiChevronLeft className="w-4 h-4" />
+                    </motion.button>
+                    <span className="text-lg font-medium text-gray-700">
+                      {formatMonthYear(currentMonth)}
+                    </span>
+                    <motion.button
+                      onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
+                      className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <FiChevronRight className="w-4 h-4" />
+                    </motion.button>
+                  </div>
+                </div>
+
+                {/* Calendar Grid */}
+                <div className="grid grid-cols-7 gap-1 mb-4">
+                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                    <div key={day} className="p-2 text-center text-sm font-medium text-gray-500">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-7 gap-1">
+                  {getDaysInMonth(currentMonth).map((date, index) => (
+                    <motion.button
+                      key={index}
+                      onClick={() => date && !isPastDate(date) && handleDateSelect(date)}
+                      disabled={!date || isPastDate(date)}
+                      className={`p-3 text-center rounded-lg transition-all ${
+                        !date
+                          ? 'invisible'
+                          : isPastDate(date)
+                          ? 'text-gray-400 cursor-not-allowed'
+                          : isSelected(date)
+                          ? 'bg-green-500 text-white shadow-lg'
+                          : isToday(date)
+                          ? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
+                          : 'hover:bg-gray-100 text-gray-700'
+                      }`}
+                      whileHover={date && !isPastDate(date) ? { scale: 1.05 } : {}}
+                      whileTap={date && !isPastDate(date) ? { scale: 0.95 } : {}}
+                    >
+                      {date ? date.getDate() : ''}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Time Slots */}
+              <div className="bg-white/50 rounded-lg p-6">
+                <div className="flex items-center gap-2 mb-6">
+                  <FiClock className="text-gray-600" />
+                  <h4 className="text-lg font-semibold text-gray-800">Available Time Slots</h4>
+                </div>
+
+                {loadingSlots ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+                    {availableSlots.length === 0 ? (
+                      <div className="col-span-2 text-center py-8 text-gray-500">
+                        <FiClock className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <p>No available slots for this date</p>
+                      </div>
+                    ) : (
+                      availableSlots.map((slot, index) => (
+                        <motion.button
+                          key={index}
+                          onClick={() => handleTimeSlotSelect(slot.time)}
+                          disabled={!slot.available || slot.booked}
+                          className={`p-4 rounded-lg border-2 transition-all ${
+                            slot.booked
+                              ? 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed'
+                              : slot.available
+                              ? bookingData.time === slot.time
+                                ? 'bg-green-500 border-green-500 text-white'
+                                : 'bg-white border-green-200 hover:border-green-400 hover:shadow-md text-gray-700'
+                              : 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed'
+                          }`}
+                          whileHover={slot.available && !slot.booked ? { scale: 1.02 } : {}}
+                          whileTap={slot.available && !slot.booked ? { scale: 0.98 } : {}}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">{slot.time}</span>
+                            {slot.booked ? (
+                              <FiCheck className="w-4 h-4 text-red-500" />
+                            ) : slot.available ? (
+                              <FiCheck className="w-4 h-4 text-green-500" />
+                            ) : null}
+                          </div>
+                        </motion.button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex justify-end">
+              <motion.button
+                onClick={() => setCurrentStep(2)}
+                disabled={!bookingData.date || !bookingData.time}
+                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Continue
+              </motion.button>
             </div>
           </motion.div>
         );
@@ -342,54 +466,51 @@ const BookService = () => {
             animate={{ opacity: 1, x: 0 }}
             className="space-y-6"
           >
-            <h3 className="text-xl font-semibold text-white mb-4">Step 2: Additional Details</h3>
+            <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Additional Details</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Special Instructions
+                </label>
+                <textarea
+                  value={bookingData.instructions}
+                  onChange={(e) => setBookingData({ ...bookingData, instructions: e.target.value })}
+                  rows={4}
+                  placeholder="Any special requirements or instructions..."
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 resize-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Contact Phone
+                </label>
+                <input
+                  type="tel"
+                  value={bookingData.phone}
+                  onChange={(e) => setBookingData({ ...bookingData, phone: e.target.value })}
+                  placeholder="Your contact number"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                />
+              </div>
+            </div>
             
-            {/* Location Field */}
-            <div>
-              <label className="block text-sm font-medium text-white mb-2 flex items-center">
-                <FiMapPin className="mr-2" />
-                Service Location
-              </label>
-              <input
-                type="text"
-                name="location"
-                required
-                value={bookingData.location}
-                onChange={handleChange}
-                placeholder="Enter service location"
-                className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/20 text-white placeholder-white/50 focus:ring-2 focus:ring-green-500/50 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
-              />
-            </div>
-
-            {/* Instructions Field */}
-            <div>
-              <label className="block text-sm font-medium text-white mb-2 flex items-center">
-                <FiFileText className="mr-2" />
-                Special Instructions
-              </label>
-              <textarea
-                name="instructions"
-                rows="3"
-                value={bookingData.instructions}
-                onChange={handleChange}
-                placeholder="Any special requirements or instructions"
-                className="w-full px-4 py-3 rounded-lg bg-gray-800/60 border border-gray-600 text-gray-200 placeholder-gray-400 focus:ring-2 focus:ring-green-500/50 focus:border-transparent transition-all duration-300 backdrop-blur-sm resize-none"
-              />
-            </div>
-
-            {/* Phone Field */}
-            <div>
-              <label className="block text-sm font-medium text-white mb-2">
-                Contact Phone
-              </label>
-              <input
-                type="tel"
-                name="phone"
-                value={bookingData.phone}
-                onChange={handleChange}
-                placeholder="Your contact number"
-                className="w-full px-4 py-3 rounded-lg bg-gray-800/60 border border-gray-600 text-gray-200 placeholder-gray-400 focus:ring-2 focus:ring-green-500/50 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
-              />
+            <div className="flex justify-between">
+              <motion.button
+                onClick={() => setCurrentStep(1)}
+                className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Back
+              </motion.button>
+              <motion.button
+                onClick={() => setCurrentStep(3)}
+                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Continue
+              </motion.button>
             </div>
           </motion.div>
         );
@@ -415,7 +536,9 @@ const BookService = () => {
                 <div className="flex justify-between">
                   <span>Date & Time:</span>
                   <span className="font-medium">
-                    {bookingData.scheduledAt ? new Date(bookingData.scheduledAt).toLocaleString() : 'Not set'}
+                    {bookingData.date && bookingData.time 
+                      ? new Date(`${bookingData.date}T${bookingData.time}`).toLocaleString() 
+                      : 'Not set'}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -443,6 +566,26 @@ const BookService = () => {
                   </div>
                 )}
               </div>
+            </div>
+            
+            <div className="flex justify-between">
+              <motion.button
+                onClick={() => setCurrentStep(2)}
+                className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Back
+              </motion.button>
+              <motion.button
+                onClick={handleSubmit}
+                disabled={bookingLoading}
+                className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {bookingLoading ? 'Booking...' : 'Confirm Booking'}
+              </motion.button>
             </div>
           </motion.div>
         );
@@ -548,306 +691,7 @@ const BookService = () => {
             transition={{ duration: 0.3 }}
             className="mt-8"
           >
-            {currentStep === 1 && (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Service Details</h3>
-                  <div className="bg-white/50 dark:bg-gray-700/50 rounded-lg p-6">
-                    <p className="text-gray-700 dark:text-gray-300 mb-4">{service?.description}</p>
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium text-gray-600 dark:text-gray-400">Category:</span>
-                        <span className="ml-2 text-gray-800 dark:text-gray-200">{service?.category?.name}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600 dark:text-gray-400">Price:</span>
-                        <span className="ml-2 text-green-600 dark:text-green-400 font-semibold">₹{service?.price}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600 dark:text-gray-400">Duration:</span>
-                        <span className="ml-2 text-blue-600 dark:text-blue-400 font-semibold">{service?.duration} hour{service?.duration !== 1 ? 's' : ''}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex justify-end">
-                  <motion.button
-                    onClick={() => setCurrentStep(2)}
-                    className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    Continue
-                  </motion.button>
-                </div>
-              </div>
-            )}
-
-            {currentStep === 2 && (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Select Date & Time</h3>
-                  
-                  {/* Calendar Section */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Calendar */}
-                    <div className="bg-white/50 rounded-lg p-6">
-                      <div className="flex items-center justify-between mb-6">
-                        <h4 className="text-lg font-semibold text-gray-800">Select Date</h4>
-                        <div className="flex items-center gap-2">
-                          <motion.button
-                            onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
-                            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                          >
-                            <FiChevronLeft className="w-4 h-4" />
-                          </motion.button>
-                          <span className="text-lg font-medium text-gray-700">
-                            {formatMonthYear(currentMonth)}
-                          </span>
-                          <motion.button
-                            onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
-                            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                          >
-                            <FiChevronRight className="w-4 h-4" />
-                          </motion.button>
-                        </div>
-                      </div>
-
-                      {/* Calendar Grid */}
-                      <div className="grid grid-cols-7 gap-1 mb-4">
-                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                          <div key={day} className="p-2 text-center text-sm font-medium text-gray-500">
-                            {day}
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="grid grid-cols-7 gap-1">
-                        {getDaysInMonth(currentMonth).map((date, index) => (
-                          <motion.button
-                            key={index}
-                            onClick={() => date && !isPastDate(date) && handleDateSelect(date)}
-                            disabled={!date || isPastDate(date)}
-                            className={`p-3 text-center rounded-lg transition-all ${
-                              !date
-                                ? 'invisible'
-                                : isPastDate(date)
-                                ? 'text-gray-400 cursor-not-allowed'
-                                : isSelected(date)
-                                ? 'bg-green-500 text-white shadow-lg'
-                                : isToday(date)
-                                ? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
-                                : 'hover:bg-gray-100 text-gray-700'
-                            }`}
-                            whileHover={date && !isPastDate(date) ? { scale: 1.05 } : {}}
-                            whileTap={date && !isPastDate(date) ? { scale: 0.95 } : {}}
-                          >
-                            {date ? date.getDate() : ''}
-                          </motion.button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Time Slots */}
-                    <div className="bg-white/50 rounded-lg p-6">
-                      <div className="flex items-center gap-2 mb-6">
-                        <FiClock className="text-gray-600" />
-                        <h4 className="text-lg font-semibold text-gray-800">Available Time Slots</h4>
-                      </div>
-
-                      {loadingSlots ? (
-                        <div className="flex items-center justify-center py-12">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
-                          {availableSlots.length === 0 ? (
-                            <div className="col-span-2 text-center py-8 text-gray-500">
-                              <FiClock className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                              <p>No available slots for this date</p>
-                            </div>
-                          ) : (
-                            availableSlots.map((slot, index) => (
-                              <motion.button
-                                key={index}
-                                onClick={() => handleTimeSlotSelect(slot.time)}
-                                disabled={!slot.available || slot.booked}
-                                className={`p-4 rounded-lg border-2 transition-all ${
-                                  slot.booked
-                                    ? 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed'
-                                    : slot.available
-                                    ? bookingData.time === slot.time
-                                      ? 'bg-green-500 border-green-500 text-white'
-                                      : 'bg-white border-green-200 hover:border-green-400 hover:shadow-md text-gray-700'
-                                    : 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed'
-                                }`}
-                                whileHover={slot.available && !slot.booked ? { scale: 1.02 } : {}}
-                                whileTap={slot.available && !slot.booked ? { scale: 0.98 } : {}}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <span className="font-medium">{slot.time}</span>
-                                  {slot.booked ? (
-                                    <FiCheck className="w-4 h-4 text-red-500" />
-                                  ) : slot.available ? (
-                                    <FiCheck className="w-4 h-4 text-green-500" />
-                                  ) : null}
-                                </div>
-                              </motion.button>
-                            ))
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex justify-between">
-                  <motion.button
-                    onClick={() => setCurrentStep(1)}
-                    className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    Back
-                  </motion.button>
-                  <motion.button
-                    onClick={() => setCurrentStep(3)}
-                    disabled={!bookingData.date || !bookingData.time}
-                    className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    Continue
-                  </motion.button>
-                </div>
-              </div>
-            )}
-
-            {currentStep === 3 && (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Additional Details</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Special Instructions
-                      </label>
-                      <textarea
-                        value={bookingData.instructions}
-                        onChange={(e) => setBookingData({ ...bookingData, instructions: e.target.value })}
-                        rows={4}
-                        placeholder="Any special requirements or instructions..."
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 resize-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Contact Phone
-                      </label>
-                      <input
-                        type="tel"
-                        value={bookingData.phone}
-                        onChange={(e) => setBookingData({ ...bookingData, phone: e.target.value })}
-                        placeholder="Your contact number"
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      />
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex justify-between">
-                  <motion.button
-                    onClick={() => setCurrentStep(2)}
-                    className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    Back
-                  </motion.button>
-                  <motion.button
-                    onClick={() => setCurrentStep(4)}
-                    className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    Review & Book
-                  </motion.button>
-                </div>
-              </div>
-            )}
-
-            {currentStep === 4 && (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Review & Confirm</h3>
-                  <div className="bg-white/50 dark:bg-gray-700/50 rounded-lg p-6 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <span className="font-medium text-gray-600 dark:text-gray-400">Service:</span>
-                        <span className="ml-2 text-gray-800 dark:text-gray-200">{service?.title}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600 dark:text-gray-400">Provider:</span>
-                        <span className="ml-2 text-gray-800 dark:text-gray-200">{service?.provider?.name}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600 dark:text-gray-400">Date:</span>
-                        <span className="ml-2 text-gray-800 dark:text-gray-200">{bookingData.date}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600 dark:text-gray-400">Time:</span>
-                        <span className="ml-2 text-gray-800 dark:text-gray-200">{bookingData.time}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600 dark:text-gray-400">Duration:</span>
-                        <span className="ml-2 text-blue-600 dark:text-blue-400 font-semibold">{service?.duration} hour{service?.duration !== 1 ? 's' : ''}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600 dark:text-gray-400">Price:</span>
-                        <span className="ml-2 text-green-600 dark:text-green-400 font-semibold">₹{service?.price}</span>
-                      </div>
-                      {bookingData.phone && (
-                        <div>
-                          <span className="font-medium text-gray-600 dark:text-gray-400">Phone:</span>
-                          <span className="ml-2 text-gray-800 dark:text-gray-200">{bookingData.phone}</span>
-                        </div>
-                      )}
-                    </div>
-                    {bookingData.instructions && (
-                      <div>
-                        <span className="font-medium text-gray-600 dark:text-gray-400">Instructions:</span>
-                        <p className="mt-1 text-gray-800 dark:text-gray-200">{bookingData.instructions}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="flex justify-between">
-                  <motion.button
-                    onClick={() => setCurrentStep(3)}
-                    className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    Back
-                  </motion.button>
-                  <motion.button
-                    onClick={handleSubmit}
-                    disabled={bookingLoading}
-                    className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    {bookingLoading ? 'Booking...' : 'Confirm Booking'}
-                  </motion.button>
-                </div>
-              </div>
-            )}
+            {renderStepContent()}
           </motion.div>
         </motion.div>
       </div>
