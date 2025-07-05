@@ -1,4 +1,4 @@
-# 🏠 Home Service Platform
+# 🏠 Home Service Platform - Hourly
 
 A modern, full-stack home service booking platform built with React, Node.js, and MongoDB. Connect service providers with customers through an intelligent interface featuring AI-powered recommendations, real-time chat, location-based services, and seamless booking management.
 
