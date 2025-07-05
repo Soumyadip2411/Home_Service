@@ -470,24 +470,21 @@ const Services = () => {
                         </motion.div>
                       </div>
 
-                      <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-600">
+                      <div className="flex justify-between items-center pt-4 border-t border-gray-200">
                         <motion.span 
-                          className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-sm text-gray-600 dark:text-gray-300 font-medium group-hover:bg-gray-200 dark:group-hover:bg-gray-600 transition-colors duration-300"
+                          className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-600 font-medium group-hover:bg-gray-200 transition-colors duration-300"
                           whileHover={{ scale: 1.05 }}
                         >
                           {service.category?.name}
                         </motion.span>
                         <motion.button
-                          whileHover={{ 
-                            scale: 1.05,
-                            boxShadow: "0 10px 25px rgba(34, 197, 94, 0.3)"
-                          }}
-                          whileTap={{ scale: 0.95 }}
                           onClick={(e) => {
                             e.stopPropagation();
                             navigate(`/book-service/${service._id}`);
                           }}
                           className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg hover:from-green-700 hover:to-green-600 transition-all duration-300 shadow-md hover:shadow-lg font-medium"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                         >
                           Book Now
                         </motion.button>

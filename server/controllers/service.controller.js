@@ -213,3 +213,119 @@ export const batchUpdateServiceTags = async (req, res) => {
     res.status(500).json({ message: 'Failed to update tags' });
   }
 };
+
+export const getServiceAvailability = async (req, res) => {
+  try {
+    const { serviceId } = req.params;
+    const { date } = req.query;
+
+    if (!date) {
+      return res.status(400).json({
+        success: false,
+        message: "Date parameter is required"
+      });
+    }
+
+    // Get the service to check its duration
+    const service = await Service.findById(serviceId);
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        message: "Service not found"
+      });
+    }
+
+    // Parse the date
+    const selectedDate = new Date(date);
+    const startOfDay = new Date(selectedDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(selectedDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Get existing bookings for this service on the selected date
+    const existingBookings = await Booking.find({
+      service: serviceId,
+      date: date,
+      status: { $in: ['confirmed', 'pending'] } // Only consider active bookings
+    });
+
+    // Define working hours (8 AM to 6 PM)
+    const workingHours = {
+      start: 8,
+      end: 18
+    };
+
+    // Generate time slots with 1-hour intervals
+    const timeSlots = [];
+    for (let hour = workingHours.start; hour < workingHours.end; hour++) {
+      const timeString = `${hour.toString().padStart(2, '0')}:00`;
+      
+      // Check if this time slot is available
+      const slotStartTime = new Date(selectedDate);
+      slotStartTime.setHours(hour, 0, 0, 0);
+      
+      const slotEndTime = new Date(selectedDate);
+      slotEndTime.setHours(hour + 1, 0, 0, 0); // 1 hour duration
+      
+      // Add relaxation time (30 minutes before and after)
+      const relaxationTime = 30; // minutes
+      const slotStartWithRelaxation = new Date(slotStartTime);
+      slotStartWithRelaxation.setMinutes(slotStartWithRelaxation.getMinutes() - relaxationTime);
+      
+      const slotEndWithRelaxation = new Date(slotEndTime);
+      slotEndWithRelaxation.setMinutes(slotEndWithRelaxation.getMinutes() + relaxationTime);
+
+      // Check for conflicts with existing bookings
+      let isAvailable = true;
+      let conflictReason = null;
+
+      for (const booking of existingBookings) {
+        const bookingStartTime = new Date(`${booking.date}T${booking.time}`);
+        const bookingEndTime = new Date(bookingStartTime);
+        bookingEndTime.setHours(bookingStartTime.getHours() + 1); // Assume 1 hour duration
+
+        // Check if there's any overlap
+        if (
+          (slotStartWithRelaxation < bookingEndTime && slotEndWithRelaxation > bookingStartTime) ||
+          (bookingStartTime < slotEndWithRelaxation && bookingEndTime > slotStartWithRelaxation)
+        ) {
+          isAvailable = false;
+          conflictReason = `Booked at ${booking.time}`;
+          break;
+        }
+      }
+
+      // Check if the time slot is in the past
+      const now = new Date();
+      if (slotStartTime <= now) {
+        isAvailable = false;
+        conflictReason = "Past time";
+      }
+
+      timeSlots.push({
+        time: timeString,
+        available: isAvailable,
+        booked: !isAvailable,
+        conflictReason: conflictReason
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      availableSlots: timeSlots,
+      serviceDuration: service.duration || "1 hour",
+      workingHours: {
+        start: workingHours.start,
+        end: workingHours.end
+      }
+    });
+
+  } catch (error) {
+    console.error('Service availability error:', error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching service availability",
+      error: error.message
+    });
+  }
+};

@@ -47,7 +47,7 @@ app.get("/", (request, response) => {
 });
 
 app.use("/api/user", userRouter);
-app.use("/api/booking", bookingRouter);
+app.use("/api/bookings", bookingRouter);
 app.use("/api/category", categoryRouter);
 app.use("/api/service",serviceRouter)
 app.use("/api/interactions",interactionRouter);

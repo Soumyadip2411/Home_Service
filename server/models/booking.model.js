@@ -16,14 +16,27 @@ const bookingSchema = new mongoose.Schema({
     ref: "Service",
     required: true,
   },
-  scheduledAt: { type: Date, required: true },
+  date: { 
+    type: String, 
+    required: true 
+  },
+  time: { 
+    type: String, 
+    required: true 
+  },
+  instructions: { 
+    type: String, 
+    default: "" 
+  },
+  phone: { 
+    type: String, 
+    default: "" 
+  },
   status: {
     type: String,
     enum: ["pending", "confirmed", "completed", "cancelled"],
     default: "pending",
   },
-  location: { type: String, required: true },
-  notes: String,
   createdAt: { type: Date, default: Date.now },
   hasReview: {
     type: Boolean,

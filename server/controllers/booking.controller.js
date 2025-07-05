@@ -196,13 +196,12 @@ export async function updateStatus(request, response) {
 export async function createBooking(request, response) {
   try {
     const userId = request.userId;
-    const { serviceId } = request.params;
-    const { scheduledAt, location, notes } = request.body;
+    const { serviceId, date, time, instructions, phone } = request.body;
 
     // Validate required fields
-    if (!scheduledAt || !location) {
+    if (!date || !time) {
       return response.status(400).json({
-        message: "Scheduled date and location are required",
+        message: "Date and time are required",
         success: false,
         error: true,
       });
@@ -218,15 +217,76 @@ export async function createBooking(request, response) {
       });
     }
 
-    const booking = await Booking.create({
+    // Check for booking conflicts
+    const bookingDateTime = new Date(`${date}T${time}`);
+    const now = new Date();
+    
+    // Check if the booking is in the past
+    if (bookingDateTime <= now) {
+      return response.status(400).json({
+        message: "Cannot book a time in the past",
+        success: false,
+        error: true,
+      });
+    }
+
+    // Check for existing bookings with relaxation time
+    const relaxationTime = 30; // minutes
+    const bookingStartTime = new Date(bookingDateTime);
+    const bookingEndTime = new Date(bookingDateTime);
+    bookingEndTime.setHours(bookingEndTime.getHours() + 1); // 1 hour duration
+
+    const slotStartWithRelaxation = new Date(bookingStartTime);
+    slotStartWithRelaxation.setMinutes(slotStartWithRelaxation.getMinutes() - relaxationTime);
+    
+    const slotEndWithRelaxation = new Date(bookingEndTime);
+    slotEndWithRelaxation.setMinutes(slotEndWithRelaxation.getMinutes() + relaxationTime);
+
+    // Check for conflicts with existing bookings using a simpler approach
+    const existingBookings = await Booking.find({
+      service: serviceId,
+      date: date,
+      status: { $in: ['confirmed', 'pending'] }
+    });
+
+    // Check for time conflicts manually
+    let hasConflict = false;
+    for (const booking of existingBookings) {
+      const existingBookingTime = new Date(`${booking.date}T${booking.time}`);
+      const existingBookingEndTime = new Date(existingBookingTime);
+      existingBookingEndTime.setHours(existingBookingEndTime.getHours() + 1);
+
+      // Check if there's any overlap with relaxation time
+      if (
+        (slotStartWithRelaxation < existingBookingEndTime && slotEndWithRelaxation > existingBookingTime) ||
+        (existingBookingTime < slotEndWithRelaxation && existingBookingEndTime > slotStartWithRelaxation)
+      ) {
+        hasConflict = true;
+        break;
+      }
+    }
+
+    if (hasConflict) {
+      return response.status(409).json({
+        message: "This time slot is no longer available. Please select another time.",
+        success: false,
+        error: true,
+      });
+    }
+
+    // Create the booking
+    const bookingData = {
       customer: userId,
       provider: service.provider,
       service: serviceId,
-      scheduledAt: new Date(scheduledAt),
-      location,
-      notes,
+      date: date,
+      time: time,
+      instructions: instructions || "",
+      phone: phone || "",
       status: "pending",
-    });
+    };
+
+    const booking = await Booking.create(bookingData);
 
     const populatedBooking = await Booking.findById(booking._id)
       .populate("customer", "name email")
@@ -240,9 +300,9 @@ export async function createBooking(request, response) {
         providerName: provider.name,
         customerName: populatedBooking.customer.name,
         serviceTitle: service.title,
-        scheduledAt,
-        location,
-        notes
+        scheduledAt: `${date} at ${time}`,
+        location: "Customer's location",
+        notes: instructions || "No special instructions"
       });
       await sendEmail({
         sendTo: provider.email,
@@ -258,7 +318,7 @@ export async function createBooking(request, response) {
       error: false,
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error in createBooking:', error);
     return response.status(500).json({
       message: "Internal server error",
       error: true,

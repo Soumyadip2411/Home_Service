@@ -42,28 +42,28 @@ const SummaryApi = {
     method: "get",
   },
   getBookings: {
-    url: "/api/booking/get-bookings",
+    url: "/api/bookings/get-bookings",
     method: "get",
   },
   updateBookingStatus: {
-    url: "/api/booking/update-booking-status",
+    url: "/api/bookings/update-booking-status",
     method: "post",
   },
   getMyBookings: {
-    url: "/api/booking/my-bookings",
+    url: "/api/bookings/my-bookings",
     method: "get",
   },
   
   createBooking: {
-    url: "/api/booking/create-booking",  // Fixed the URL
+    url: "/api/bookings/create-booking",
     method: "post",
   },
   getCustomerNameByBookingId: {
-    url: "/api/booking/customer-name",
+    url: "/api/bookings/customer-name",
     method: "get",
   },
   getProviderNameByBookingId: {
-    url: "/api/booking/provider-name",
+    url: "/api/bookings/provider-name",
     method: "get",
   },
   getAllCategories: {

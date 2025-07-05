@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import Axios from "../utils/Axios";
 
-import { FiClock, FiMapPin, FiFileText, FiCalendar, FiDollarSign, FiCheck } from "react-icons/fi";
+import { FiClock, FiMapPin, FiFileText, FiCalendar, FiDollarSign, FiCheck, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
 import BookingProgress from "../components/BookingProgress";
 import { updateLocalTagProfile } from '../components/Recommendation';
@@ -16,12 +16,18 @@ const BookService = () => {
   const [showContact, setShowContact] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [bookingData, setBookingData] = useState({
-    scheduledAt: "",
-    location: "",
-    notes: "",
-    durationType: "hours", // hours, days, months
-    duration: 1,
+    date: "",
+    time: "",
+    instructions: "",
+    phone: ""
   });
+  const [bookingLoading, setBookingLoading] = useState(false);
+  
+  // Calendar state
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
 
   // Custom steps for booking flow
   const bookingSteps = [
@@ -218,6 +224,111 @@ const BookService = () => {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
+  // Calendar functions
+  const getDaysInMonth = (date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDay = firstDay.getDay();
+    
+    const days = [];
+    
+    for (let i = 0; i < startingDay; i++) {
+      days.push(null);
+    }
+    
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(new Date(year, month, i));
+    }
+    
+    return days;
+  };
+
+  const fetchAvailableSlots = async (date) => {
+    try {
+      setLoadingSlots(true);
+      const response = await Axios.get(`/api/service/${serviceId}/availability`, {
+        params: {
+          date: date.toISOString().split('T')[0]
+        }
+      });
+      
+      if (response.data.success) {
+        setAvailableSlots(response.data.availableSlots);
+      } else {
+        toast.error(response.data.message || 'Failed to fetch availability');
+      }
+    } catch (error) {
+      console.error('Error fetching availability:', error);
+      toast.error('Failed to fetch available time slots');
+    } finally {
+      setLoadingSlots(false);
+    }
+  };
+
+  const handleDateSelect = (date) => {
+    setSelectedDate(date);
+    setBookingData(prev => ({ ...prev, date: date.toISOString().split('T')[0] }));
+    fetchAvailableSlots(date);
+  };
+
+  const handleTimeSlotSelect = (time) => {
+    setBookingData(prev => ({ ...prev, time }));
+  };
+
+  const isToday = (date) => {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  };
+
+  const isSelected = (date) => {
+    return selectedDate?.toDateString() === date.toDateString();
+  };
+
+  const isPastDate = (date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date < today;
+  };
+
+  const formatMonthYear = (date) => {
+    return date.toLocaleDateString('en-US', { 
+      month: 'long', 
+      year: 'numeric' 
+    });
+  };
+
+  const handleBooking = async () => {
+    if (!bookingData.date || !bookingData.time) {
+      toast.error("Please select a date and time");
+      return;
+    }
+
+    try {
+      setBookingLoading(true);
+      const response = await Axios.post("/api/bookings", {
+        serviceId,
+        date: bookingData.date,
+        time: bookingData.time,
+        instructions: bookingData.instructions,
+        phone: bookingData.phone
+      });
+
+      if (response.data.success) {
+        toast.success("Booking confirmed successfully!");
+        navigate("/bookings");
+      } else {
+        toast.error(response.data.message || "Booking failed");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Booking failed");
+    } finally {
+      setBookingLoading(false);
+    }
+  };
+
   // Render step content
   const renderStepContent = () => {
     switch (currentStep) {
@@ -387,6 +498,14 @@ const BookService = () => {
     }
   };
 
+  if (!service) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+      </div>
+    );
+  }
+
   return (
     <motion.div
       className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 relative"
@@ -496,29 +615,120 @@ const BookService = () => {
               <div className="space-y-6">
                 <div>
                   <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Select Date & Time</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Preferred Date
-                      </label>
-                      <input
-                        type="date"
-                        value={bookingData.date}
-                        onChange={(e) => setBookingData({ ...bookingData, date: e.target.value })}
-                        min={new Date().toISOString().split('T')[0]}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      />
+                  
+                  {/* Calendar Section */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Calendar */}
+                    <div className="bg-white/50 rounded-lg p-6">
+                      <div className="flex items-center justify-between mb-6">
+                        <h4 className="text-lg font-semibold text-gray-800">Select Date</h4>
+                        <div className="flex items-center gap-2">
+                          <motion.button
+                            onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
+                            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                          >
+                            <FiChevronLeft className="w-4 h-4" />
+                          </motion.button>
+                          <span className="text-lg font-medium text-gray-700">
+                            {formatMonthYear(currentMonth)}
+                          </span>
+                          <motion.button
+                            onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
+                            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                          >
+                            <FiChevronRight className="w-4 h-4" />
+                          </motion.button>
+                        </div>
+                      </div>
+
+                      {/* Calendar Grid */}
+                      <div className="grid grid-cols-7 gap-1 mb-4">
+                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                          <div key={day} className="p-2 text-center text-sm font-medium text-gray-500">
+                            {day}
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="grid grid-cols-7 gap-1">
+                        {getDaysInMonth(currentMonth).map((date, index) => (
+                          <motion.button
+                            key={index}
+                            onClick={() => date && !isPastDate(date) && handleDateSelect(date)}
+                            disabled={!date || isPastDate(date)}
+                            className={`p-3 text-center rounded-lg transition-all ${
+                              !date
+                                ? 'invisible'
+                                : isPastDate(date)
+                                ? 'text-gray-400 cursor-not-allowed'
+                                : isSelected(date)
+                                ? 'bg-green-500 text-white shadow-lg'
+                                : isToday(date)
+                                ? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
+                                : 'hover:bg-gray-100 text-gray-700'
+                            }`}
+                            whileHover={date && !isPastDate(date) ? { scale: 1.05 } : {}}
+                            whileTap={date && !isPastDate(date) ? { scale: 0.95 } : {}}
+                          >
+                            {date ? date.getDate() : ''}
+                          </motion.button>
+                        ))}
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Preferred Time
-                      </label>
-                      <input
-                        type="time"
-                        value={bookingData.time}
-                        onChange={(e) => setBookingData({ ...bookingData, time: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      />
+
+                    {/* Time Slots */}
+                    <div className="bg-white/50 rounded-lg p-6">
+                      <div className="flex items-center gap-2 mb-6">
+                        <FiClock className="text-gray-600" />
+                        <h4 className="text-lg font-semibold text-gray-800">Available Time Slots</h4>
+                      </div>
+
+                      {loadingSlots ? (
+                        <div className="flex items-center justify-center py-12">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+                          {availableSlots.length === 0 ? (
+                            <div className="col-span-2 text-center py-8 text-gray-500">
+                              <FiClock className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                              <p>No available slots for this date</p>
+                            </div>
+                          ) : (
+                            availableSlots.map((slot, index) => (
+                              <motion.button
+                                key={index}
+                                onClick={() => handleTimeSlotSelect(slot.time)}
+                                disabled={!slot.available || slot.booked}
+                                className={`p-4 rounded-lg border-2 transition-all ${
+                                  slot.booked
+                                    ? 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed'
+                                    : slot.available
+                                    ? bookingData.time === slot.time
+                                      ? 'bg-green-500 border-green-500 text-white'
+                                      : 'bg-white border-green-200 hover:border-green-400 hover:shadow-md text-gray-700'
+                                    : 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed'
+                                }`}
+                                whileHover={slot.available && !slot.booked ? { scale: 1.02 } : {}}
+                                whileTap={slot.available && !slot.booked ? { scale: 0.98 } : {}}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium">{slot.time}</span>
+                                  {slot.booked ? (
+                                    <FiCheck className="w-4 h-4 text-red-500" />
+                                  ) : slot.available ? (
+                                    <FiCheck className="w-4 h-4 text-green-500" />
+                                  ) : null}
+                                </div>
+                              </motion.button>
+                            ))
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -650,12 +860,13 @@ const BookService = () => {
                     Back
                   </motion.button>
                   <motion.button
-                    onClick={handleSubmit}
-                    className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    onClick={handleBooking}
+                    disabled={bookingLoading}
+                    className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    Confirm Booking
+                    {bookingLoading ? 'Booking...' : 'Confirm Booking'}
                   </motion.button>
                 </div>
               </div>

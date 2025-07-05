@@ -18,8 +18,8 @@ const Bookings = () => {
     try {
       const response = await Axios({
         url: view === "requests" 
-          ? "/api/booking/get-bookings"
-          : "/api/booking/my-bookings",
+          ? "/api/bookings/get-bookings"
+          : "/api/bookings/my-bookings",
         method: "get",
       });
       if (response.data.success) {
@@ -39,7 +39,7 @@ const Bookings = () => {
   const handleStatusUpdate = async (bookingId, newStatus) => {
     try {
       const response = await Axios({
-        url: `/api/booking/update-booking-status/${bookingId}`,
+        url: `/api/bookings/update-booking-status/${bookingId}`,
         method: "post",
         data: { status: newStatus },
       });
@@ -151,19 +151,19 @@ const Bookings = () => {
         </div>
       ) : (
         <div className="grid gap-6">
-          {bookings.map((booking) => (
+          {bookings.map((booking, index) => (
             <motion.div key={booking._id} className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-xl font-semibold">{booking.service.title}</h3>
+                  <h3 className="text-xl font-semibold">{booking.service?.title || "Service not found"}</h3>
                   <p className="text-gray-600">
                     {user.role === "PROVIDER" && view === "requests"
-                      ? `Customer: ${booking.customer.name}`
-                      : `Provider: ${booking.provider.name}`}
+                      ? `Customer: ${booking.customer?.name || "Customer not found"}`
+                      : `Provider: ${booking.provider?.name || "Provider not found"}`}
                   </p>
                 </div>
                 <div className="flex flex-col items-end">
-                  <span className="text-lg font-bold">₹{booking.service.price}</span>
+                  <span className="text-lg font-bold">₹{booking.service?.price || "N/A"}</span>
                   <span className={`px-3 py-1 rounded-full text-sm ${
                     booking.status === "confirmed" ? "bg-green-100 text-green-800" :
                     booking.status === "completed" ? "bg-blue-100 text-blue-800" :
@@ -179,12 +179,25 @@ const Bookings = () => {
                 <div>
                   <p className="text-gray-600">Scheduled for:</p>
                   <p className="font-medium">
-                    {format(new Date(booking.scheduledAt), "PPP p")}
+                    {booking.date && booking.time 
+                      ? (() => {
+                          const dateTime = `${booking.date}T${booking.time}`;
+                          const parsedDate = new Date(dateTime);
+                          return !isNaN(parsedDate) 
+                            ? format(parsedDate, "PPP p")
+                            : "Invalid date format";
+                        })()
+                      : booking.scheduledAt 
+                        ? format(new Date(booking.scheduledAt), "PPP p")
+                        : "Date not set"
+                    }
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Location:</p>
-                  <p className="font-medium">{booking.location}</p>
+                  <p className="text-gray-600">Provider:</p>
+                  <p className="font-medium">
+                    {booking.provider?.name || "Provider not found"}
+                  </p>
                 </div>
               </div>
 
