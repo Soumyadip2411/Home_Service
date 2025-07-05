@@ -105,7 +105,7 @@ const AddService = () => {
   
       if (response.data.success) {
         toast.success("Service added successfully!");
-        console.log("Response:", response.data);
+       
         // Optionally clear form:
         setFormData({
           title: "",

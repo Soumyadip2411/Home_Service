@@ -48,10 +48,10 @@ const ChatSection = ({ bookingId, userId, userRole }) => {
           ? `/api/bookings/customer-name/${bookingId}`
           : `/api/bookings/provider-name/${bookingId}`;
         
-        console.log('Fetching chat partner name from:', endpoint);
+       
         response = await axios.get(endpoint);
         
-        console.log('Chat partner response:', response.data);
+       
         
         if (response.data.success && response.data.data.name) {
           setChatPartnerName(response.data.data.name);

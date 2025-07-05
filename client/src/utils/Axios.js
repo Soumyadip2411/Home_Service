@@ -1,8 +1,10 @@
 import axios from "axios";
-import SummaryApi from "../common/SummaryApi";
+import  SummaryApi  from "../common/SummaryApi";
+import { baseURL } from "../common/SummaryApi";
+
 
 const Axios = axios.create({
-  baseURL: "http://localhost:8080",
+  baseURL: baseURL, // Use the base URL from the environment variable,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -39,7 +41,7 @@ Axios.interceptors.response.use(
           url: SummaryApi.refreshToken.url,
           method: SummaryApi.refreshToken.method,
           data: { refreshToken },
-          baseURL: "http://localhost:8080",
+          baseURL: baseURL,
           withCredentials: true,
           headers: {
             "Content-Type": "application/json",
