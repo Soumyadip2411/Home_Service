@@ -837,7 +837,7 @@ const BookService = () => {
                     Back
                   </motion.button>
                   <motion.button
-                    onClick={handleBooking}
+                    onClick={handleSubmit}
                     disabled={bookingLoading}
                     className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     whileHover={{ scale: 1.05 }}
