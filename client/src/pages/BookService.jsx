@@ -492,6 +492,30 @@ const BookService = () => {
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Location
+                </label>
+                <input
+                  type="text"
+                  value={bookingData.location || ''}
+                  onChange={(e) => setBookingData({ ...bookingData, location: e.target.value })}
+                  placeholder="Your address or location"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Pin Code
+                </label>
+                <input
+                  type="text"
+                  value={bookingData.pincode || ''}
+                  onChange={(e) => setBookingData({ ...bookingData, pincode: e.target.value })}
+                  placeholder="Your area pin code"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                />
+              </div>
             </div>
             
             <div className="flex justify-between">
@@ -548,6 +572,10 @@ const BookService = () => {
                 <div className="flex justify-between">
                   <span>Location:</span>
                   <span className="font-medium">{bookingData.location || 'Not set'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Pin Code:</span>
+                  <span className="font-medium">{bookingData.pincode || 'Not set'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Price:</span>
