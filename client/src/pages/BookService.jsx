@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
@@ -38,6 +38,9 @@ const BookService = () => {
     { id: 3, title: 'Review & Confirm', icon: FiFileText, description: 'Review details and confirm' },
     { id: 4, title: 'Booking Complete', icon: FiDollarSign, description: 'Booking confirmed' }
   ];
+
+  const [pincodeData, setPincodeData] = useState(["", "", "", "", "", ""]);
+  const pincodeRef = useRef([]);
 
   useEffect(() => {
     const fetchServiceDetails = async () => {
@@ -160,11 +163,13 @@ const BookService = () => {
     }
     
     const bookingDataForBackend = {
-      date: bookingData.date,
-      time: bookingData.time,
-      instructions: bookingData.instructions || "",
-      phone: bookingData.phone || ""
-    };
+  date: bookingData.date,
+  time: bookingData.time,
+  instructions: bookingData.instructions || "",
+  phone: bookingData.phone || "",
+  location: bookingData.location || "",
+  pincode: bookingData.pincode || ""
+};
     
     try {
       const response = await Axios({
@@ -508,13 +513,32 @@ const BookService = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Pin Code
                 </label>
-                <input
-                  type="text"
-                  value={bookingData.pincode || ''}
-                  onChange={(e) => setBookingData({ ...bookingData, pincode: e.target.value })}
-                  placeholder="Your area pin code"
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                />
+                <div className="flex gap-2">
+                  {pincodeData.map((el, index) => (
+                    <input
+                      key={`pincode${index}`}
+                      type="text"
+                      maxLength={1}
+                      value={el}
+                      ref={ref => (pincodeRef.current[index] = ref)}
+                      onChange={e => {
+                        const value = e.target.value.replace(/\D/, '');
+                        const newData = [...pincodeData];
+                        newData[index] = value;
+                        setPincodeData(newData);
+                        if (value && index < 5) {
+                          pincodeRef.current[index + 1]?.focus();
+                        }
+                        if (!value && index > 0) {
+                          pincodeRef.current[index - 1]?.focus();
+                        }
+                        // Update bookingData.pincode as a string
+                        setBookingData(prev => ({ ...prev, pincode: newData.join("") }));
+                      }}
+                      className="w-10 h-10 text-lg font-bold text-center rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
+                    />
+                  ))}
+                </div>
               </div>
             </div>
             
@@ -637,6 +661,10 @@ const BookService = () => {
         return null;
     }
   };
+
+  useEffect(() => {
+    setBookingData(prev => ({ ...prev, pincode: pincodeData.join("") }));
+  }, [pincodeData]);
 
   if (!service) {
     return (

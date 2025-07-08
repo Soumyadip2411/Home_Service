@@ -302,8 +302,8 @@ export async function createBooking(request, response) {
         serviceTitle: service.title,
         scheduledAt: `${date}T${time}`,
         duration: service.duration,
-        location: request.body.location || "Not specified",
-        pincode: request.body.pincode || "Not specified",
+        location: request.body.location || "",
+        pincode: request.body.pincode || "",
         notes: instructions || "No special instructions"
       });
       await sendEmail({

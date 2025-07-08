@@ -140,8 +140,8 @@ export const bookingNotificationTemplate = ({ providerName, customerName, servic
       <p><strong>Service:</strong> ${serviceTitle}</p>
       <p><strong>Scheduled Date:</strong> ${new Date(scheduledAt).toLocaleString()}</p>
       <p><strong>Duration:</strong> ${duration} hour${duration !== 1 ? 's' : ''}</p>
-      <p><strong>Location:</strong> ${location}</p>
-      <p><strong>Pin Code:</strong> ${pincode}</p>
+      ${location && location !== 'Not specified' ? `<p><strong>Location:</strong> ${location}</p>` : ''}
+      ${pincode && pincode !== 'Not specified' ? `<p><strong>Pin Code:</strong> ${pincode}</p>` : ''}
       ${notes ? `<p><strong>Notes:</strong> ${notes}</p>` : ""}
     </div>
 
