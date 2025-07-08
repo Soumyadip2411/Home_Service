@@ -13,6 +13,12 @@ const calculateTimeDecay = (lastUpdated) => {
   return Math.pow(TIME_DECAY_FACTOR, daysSinceUpdate);
 };
 
+// Helper function to calculate recency boost (decays by half each day)
+const getRecencyFactor = (date) => {
+  const daysAgo = (Date.now() - new Date(date).getTime()) / (1000 * 60 * 60 * 24);
+  return Math.pow(0.5, daysAgo); // Halve boost for each day old
+};
+
 // Helper function to prune low-weight tags
 const pruneTags = (profile) => {
   const pruned = {};
@@ -81,6 +87,8 @@ export async function addInteraction(request, response) {
         profile[tag] *= TAG_DECAY * timeDecay;
       }
       
+      // Recency boost: more recent interactions get higher boost
+      const now = new Date();
       let serviceBoost = 0, tagBoost = 0;
       if (interactionType === 'booking') {
         serviceBoost = 2;
@@ -92,6 +100,10 @@ export async function addInteraction(request, response) {
         serviceBoost = 1;
         tagBoost = 0.3;
       }
+      // Apply recency factor (always 1 for new interaction, but can be used for batch updates)
+      const recencyFactor = getRecencyFactor(now);
+      serviceBoost *= recencyFactor;
+      tagBoost *= recencyFactor;
       // Boost tags
       (service.tags || []).forEach(tag => {
         profile[tag] = (profile[tag] || 0) + tagBoost;

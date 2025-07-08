@@ -6,7 +6,7 @@ import { logout } from '../store/userSlice';
 import { toast } from 'react-hot-toast';
 import Axios from '../utils/Axios';
 import SummaryApi from '../common/SummaryApi';
-import { FiMapPin, FiChevronDown } from 'react-icons/fi';
+import { FiMapPin, FiChevronDown, FiBell } from 'react-icons/fi';
 import { FaRobot } from 'react-icons/fa';
 
 const Header = () => {
@@ -23,8 +23,12 @@ const Header = () => {
   const [providerRequestLoading, setProviderRequestLoading] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showLocationMenu, setShowLocationMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const profileMenuRef = useRef(null);
   const locationMenuRef = useRef(null);
+  const notifPanelRef = useRef(null);
 
   // Add handleLogout function
   const handleLogout = async () => {
@@ -188,6 +192,30 @@ const Header = () => {
     }
   }, []);
 
+  // Fetch notifications and unread count
+  useEffect(() => {
+    if (user?._id) {
+      Axios.get('/api/notifications').then(res => {
+        if (res.data.success) setNotifications(res.data.data);
+      });
+      Axios.get('/api/notifications/unread/count').then(res => {
+        if (res.data.success) setUnreadCount(res.data.count);
+      });
+    }
+  }, [user?._id]);
+
+  // Mark all as read when panel opens
+  useEffect(() => {
+    if (showNotifications && notifications.some(n => !n.read)) {
+      notifications.filter(n => !n.read).forEach(n => {
+        Axios.patch(`/api/notifications/${n._id}/read`).then(() => {
+          setNotifications(prev => prev.map(x => x._id === n._id ? { ...x, read: true } : x));
+          setUnreadCount(c => Math.max(0, c - 1));
+        });
+      });
+    }
+  }, [showNotifications]);
+
   // Hide dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
@@ -196,6 +224,9 @@ const Header = () => {
       }
       if (locationMenuRef.current && !locationMenuRef.current.contains(event.target)) {
         setShowLocationMenu(false);
+      }
+      if (notifPanelRef.current && !notifPanelRef.current.contains(event.target)) {
+        setShowNotifications(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -289,6 +320,66 @@ const Header = () => {
                     </p>
                   </div>
                 </div>
+              )}
+            </div>
+
+            {/* Notifications Button */}
+            <div className="relative mr-6">
+              <button
+                className="relative p-2 rounded-full bg-white/10 hover:bg-green-600 transition-colors"
+                onClick={() => setShowNotifications(v => !v)}
+                aria-label="Notifications"
+              >
+                <FiBell className="text-2xl text-white" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 font-bold animate-pulse">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+              {showNotifications && (
+                <motion.div
+                  ref={notifPanelRef}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute right-0 mt-2 w-96 max-w-[90vw] bg-white shadow-2xl rounded-xl z-50 border border-gray-200 overflow-hidden"
+                  style={{ minWidth: 320 }}
+                >
+                  <div className="bg-green-600 text-white px-4 py-3 font-semibold text-lg flex items-center gap-2">
+                    <FiBell className="text-xl" /> Notifications
+                  </div>
+                  <div className="max-h-96 overflow-y-auto divide-y divide-gray-100">
+                    {notifications.length === 0 ? (
+                      <div className="p-6 text-center text-gray-400">No notifications yet.</div>
+                    ) : notifications.map(n => (
+                      <div key={n._id} className={`flex items-start gap-3 px-4 py-3 transition-all ${n.read ? 'bg-white' : 'bg-green-50'}`}>
+                        <div className="mt-1">
+                          {n.type === 'booking' ? <FiMapPin className="text-green-500" /> : <FiBell className="text-yellow-500" />}
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-800">{n.message}</div>
+                          <div className="text-xs text-gray-500 mt-1">{new Date(n.createdAt).toLocaleString()}</div>
+                          {n.type === 'booking' ? (
+                            <button
+                              className="mt-2 text-green-600 hover:underline text-xs font-semibold"
+                              onClick={() => { setShowNotifications(false); navigate('/bookings'); }}
+                            >
+                              View Details
+                            </button>
+                          ) : n.link && (
+                            <button
+                              className="mt-2 text-green-600 hover:underline text-xs font-semibold"
+                              onClick={() => { setShowNotifications(false); navigate(n.link); }}
+                            >
+                              View Details
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
               )}
             </div>
           </div>

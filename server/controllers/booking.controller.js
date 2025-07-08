@@ -5,6 +5,7 @@ import sendEmail from "../config/sendEmail.js";
 import Service from "../models/service.model.js";
 import Review from "../models/review.model.js";
 import { createChatRoom, deactivateChatRoom } from "./chatRoom.controller.js";
+import Notification from '../models/notification.model.js';
 
 export const getBookings = async (request, response) => {
   try {
@@ -177,6 +178,23 @@ export async function updateStatus(request, response) {
       });
     }
 
+    // Notification logic for all statuses
+    const statusMessages = {
+      confirmed: `Your booking #${updatedBooking._id} has been confirmed!`,
+      completed: `Your booking #${updatedBooking._id} has been completed. Thank you for using our service!`,
+      cancelled: `Your booking #${updatedBooking._id} has been cancelled.`
+    };
+    if (statusMessages[updatedBooking.status]) {
+      // Notify customer only
+      await Notification.create({
+        user: updatedBooking.customer,
+        type: 'booking',
+        message: statusMessages[updatedBooking.status],
+        link: `/bookings`,
+        booking: updatedBooking._id
+      });
+    }
+
     return response.status(200).json({
       message: "Booking status updated successfully",
       data: updatedBooking,
@@ -312,6 +330,15 @@ export async function createBooking(request, response) {
         html: emailContent,
       });
     }
+
+    // Notification logic for new booking
+    await Notification.create({
+      user: service.provider,
+      type: 'booking',
+      message: `New booking request #${booking._id} received. Please confirm or reject.`,
+      link: `/bookings`,
+      booking: booking._id
+    });
 
     return response.status(201).json({
       message: "Booking created successfully",

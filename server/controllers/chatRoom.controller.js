@@ -39,6 +39,13 @@ export const getChatRoomByBooking = async (req, res) => {
     const { bookingId } = req.params;
     const chatRoom = await ChatRoom.findOne({ bookingId });
     if (!chatRoom) return res.status(404).json({ message: 'Chat room not found' });
+    // Check if the requesting user is the customer or provider
+    if (
+      req.userId !== chatRoom.clientId.toString() &&
+      req.userId !== chatRoom.providerId.toString()
+    ) {
+      return res.status(403).json({ message: 'You do not have access to this chat.' });
+    }
     res.json(chatRoom);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });

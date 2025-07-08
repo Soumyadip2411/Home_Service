@@ -100,8 +100,6 @@ const BookService = () => {
     }
   };
 
-
-
   // Function to validate current step
   const validateStep = (step) => {
     switch (step) {
@@ -116,10 +114,27 @@ const BookService = () => {
     }
   };
 
-  // Function to go to next step
+  // Add this function to trigger tag boost interaction
+  const triggerTagBoost = async (step) => {
+    let interactionType = null;
+    if (step === 1) interactionType = 'view';
+    else if (step === 2) interactionType = 'click';
+    else if (step === 3) interactionType = 'booking';
+    if (interactionType) {
+      try {
+        await Axios.post(`/api/interactions/${serviceId}`, { interactionType });
+      } catch (err) {
+        // Ignore errors for boosting
+      }
+    }
+  };
+
+  // Update nextStep to trigger tag boost on step change
   const nextStep = () => {
     if (validateStep(currentStep)) {
-      setCurrentStep(prev => Math.min(prev + 1, 4));
+      const next = Math.min(currentStep + 1, 4);
+      setCurrentStep(next);
+      triggerTagBoost(next - 1); // Boost for the step just completed
     } else {
       toast.error("Please fill in all required fields before proceeding");
     }
@@ -319,8 +334,6 @@ const BookService = () => {
       year: 'numeric' 
     });
   };
-
-
 
   // Render step content
   const renderStepContent = () => {
