@@ -95,7 +95,8 @@ A modern, full-stack home service booking platform built with React, Node.js, an
 *Welcome page with featured services and categories*
 
 ### 🤖 AI Chatbot
-![AI Chatbot](https://via.placeholder.com/800x400/4F46E5/FFFFFF?text=AI+Chatbot+Interface)
+![image](https://github.com/user-attachments/assets/c046f5e9-d291-4b5b-8f0e-2b9fd126351a)
+
 *Intelligent chatbot with recommendation sidebar*
 
 ### 🎯 Smart Recommendations
@@ -107,12 +108,18 @@ A modern, full-stack home service booking platform built with React, Node.js, an
 *Detailed service information with reviews and booking options*
 
 ### 🗺️ Location Services
-![Location Services](https://via.placeholder.com/800x400/10B981/FFFFFF?text=Location+Based+Services)
+![image](https://github.com/user-attachments/assets/c11966fc-7ad4-4b81-8e0d-3c8ae0f2da23)
+
 *Interactive map with service locations and distance calculation*
 
 ### 💬 Real-time Chat
-![Real-time Chat](https://via.placeholder.com/800x400/8B5CF6/FFFFFF?text=Real-time+Chat+Interface)
+![image](https://github.com/user-attachments/assets/9eccc31d-4f3d-473c-83a3-09f70d1f6b4d)
+
 *Live chat between customers and service providers*
+### Booking Page with Progress bar 
+![image](https://github.com/user-attachments/assets/453edd9a-16e3-4f69-a63c-c11cecf464e3)
+Proceed with your bookings and it will increase the progress bar 
+
 
 ## 🛠️ Tech Stack
 
