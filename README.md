@@ -1,12 +1,12 @@
-# 🏠 Home Service Platform - Hourly
-deployment link : https://home-service-35wj.vercel.app/
+# 🏠 Home Service Platform
+
 A modern, full-stack home service booking platform built with React, Node.js, and MongoDB. Connect service providers with customers through an intelligent interface featuring AI-powered recommendations, real-time chat, location-based services, and seamless booking management.
 
-![React](https://img.shields.io/badge/React-18.3.1-blue?style=for-the-badge&logo=react)
-![Node.js](https://img.shields.io/badge/Node.js-18+-green?style=for-the-badge&logo=node.js)
-![MongoDB](https://img.shields.io/badge/MongoDB-6.0+-green?style=for-the-badge&logo=mongodb)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4.9-blue?style=for-the-badge&logo=tailwind-css)
-![AI Powered](https://img.shields.io/badge/AI-Powered-orange?style=for-the-badge&logo=openai)
+[![React](https://img.shields.io/badge/React-18.3.1-blue?style=for-the-badge&logo=react)](https://react.dev/)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green?style=for-the-badge&logo=node.js)](https://nodejs.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-6.0+-green?style=for-the-badge&logo=mongodb)](https://www.mongodb.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4.9-blue?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+[![AI Powered](https://img.shields.io/badge/AI-Powered-orange?style=for-the-badge&logo=openai)](https://openai.com/)
 
 ## ✨ Key Features
 
@@ -152,7 +152,7 @@ A modern, full-stack home service booking platform built with React, Node.js, an
 - **OpenCage Geocoding** - Reverse geocoding for address resolution
 - **Cloudinary** - Image upload and management
 
-## 📦 Installation
+## 📦 Installation & Setup
 
 ### Prerequisites
 - Node.js (v18 or higher)
@@ -177,28 +177,31 @@ npm install
 
 #### Frontend Setup
 ```bash
-cd client
+cd ../client
 npm install
 ```
 
-### 3. Environment Configuration
+### 3. Environment Variables
 
-#### Backend (.env in server directory)
-```env
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/home-service
-JWT_SECRET=your_jwt_secret_here
-JWT_REFRESH_SECRET=your_refresh_secret_here
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_email_app_password
-CLOUDINARY_CLOUD_NAME=your_cloudinary_name
-CLOUDINARY_API_KEY=your_cloudinary_key
-CLOUDINARY_API_SECRET=your_cloudinary_secret
+#### Backend (`server/.env`)
+See `server/.env.Sample` for all required variables:
+```
+MONGODB_URI=your_mongodb_uri
+SECRET_KEY_ACCESS_TOKEN=your_access_token_secret
+SECRET_KEY_REFRESH_TOKEN=your_refresh_token_secret
+CLOUDINARY_ClOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+RESEND_API=your_resend_api_key
+GEMINI_API_KEY=your_gemini_api_key
+FRONTEND_URL=http://localhost:5173
+PORT=8080
 ```
 
-#### Frontend (.env in client directory)
-```env
-VITE_API_URL=http://localhost:5000
+#### Frontend (`client/.env`)
+See `client/.env.Sample` for all required variables:
+```
+VITE_API_URL=http://localhost:8080/api
 VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
 ```
 
@@ -219,14 +222,14 @@ cd server
 npm run dev
 
 # Terminal 2 - Frontend
-cd client
+cd ../client
 npm run dev
 ```
 
 #### Production Mode
 ```bash
 # Build frontend
-cd client
+cd ../client
 npm run build
 
 # Start backend
@@ -264,7 +267,6 @@ npm start
 home-service-platform/
 ├── client/                 # Frontend React application
 │   ├── public/            # Static files
-│   ├── src/
 │   │   ├── components/    # Reusable components
 │   │   │   ├── Header.jsx
 │   │   │   ├── ChatSection.jsx
@@ -421,3 +423,25 @@ Make sure to set all required environment variables in your hosting platform:
 ⭐ **Star this repository if you found it helpful!**
 
 Made with ❤️ by Soumyadip Pramanik and team.
+
+## 🗺️ Google Maps Setup
+See `GOOGLE_MAPS_SETUP.md` for full instructions. You must:
+- Enable Maps JavaScript, Geocoding, and Places APIs in Google Cloud
+- Add your API key to `client/.env`
+- Restrict your API key for security
+
+## 📅 Booking Flow
+- Users must enter their address/location and a 6-digit pin code (with OTP-style input)
+- Both fields are sent to the backend and included in provider notification emails
+- If left blank, those fields are omitted from the email
+
+## 📖 Additional Docs
+- `GOOGLE_MAPS_SETUP.md` for Google Maps
+- `DEPLOYMENT.md` for deployment
+- `server/.env.Sample` and `client/.env.Sample` for environment variables
+
+## 📝 Notes for Developers
+- Never commit real API keys or secrets
+- Always use environment variables for sensitive data
+- For local dev, use `npm run dev` in both `server` and `client`
+- Booking emails will only show location/pin if provided by the user
