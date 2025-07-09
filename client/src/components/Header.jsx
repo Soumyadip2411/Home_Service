@@ -116,10 +116,11 @@ const Header = () => {
   };
 
   // Improved function to get address from coordinates
+  const OPENCAGE_API_KEY = import.meta.env.VITE_OPENCAGE_API_KEY;
   const getAddressFromCoordinates = async (lat, lng) => {
     try {
       // Try multiple geocoding services for better accuracy
-      const openCageUrl = `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lng}&key=84c8eaa39d454ab8a34547a3c3043670&language=en&limit=1`;
+      const openCageUrl = `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lng}&key=${OPENCAGE_API_KEY}&language=en&limit=1`;
       
       const response = await fetch(openCageUrl);
       const data = await response.json();

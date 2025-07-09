@@ -171,32 +171,61 @@ const Services = () => {
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="mb-8"
+          className="mb-8 flex gap-4"
         >
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => setShowAddService(!showAddService)}
+            onClick={() => setShowAddService(true)}
             className="bg-gradient-to-r from-green-600 to-green-500 text-white px-6 py-3 rounded-lg hover:from-green-700 hover:to-green-600 transition-all duration-300 shadow-lg"
           >
-            {showAddService ? "Close Form" : "Add New Service"}
+            Add New Service
           </motion.button>
-
-          <AnimatePresence>
-            {showAddService && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 100, damping: 20 }}
-                className="mt-6 bg-white/80 backdrop-blur-md rounded-xl p-6 shadow-xl"
-              >
-                <AddService onServiceAdded={fetchAllServices} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {!showAddService && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate("/your-services")}
+              className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-blue-600 transition-all duration-300 shadow-lg"
+            >
+              Your Services
+            </motion.button>
+          )}
         </motion.div>
       )}
+      <AnimatePresence>
+        {showAddService && (
+          <motion.div
+            key="add-service-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            style={{ minHeight: '100vh' }}
+          >
+            <motion.div
+              initial={{ scale: 0.98, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.98, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 120, damping: 18 }}
+              className="relative w-full max-w-3xl mx-auto"
+            >
+              <button
+                onClick={() => setShowAddService(false)}
+                className="absolute -top-5 -right-5 bg-white text-gray-700 hover:bg-gray-100 rounded-full shadow-lg p-2 z-10 border border-gray-200 transition-all duration-200"
+                aria-label="Close"
+                style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <AddService onServiceAdded={fetchAllServices} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Filter Section */}
       <motion.div

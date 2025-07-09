@@ -53,6 +53,7 @@ const router = createBrowserRouter([
               { path: "bookings", element: <BookingsRoleBased /> },
               
               { path: "services", element: <Services /> },
+              { path: "your-services", element: <YourServices /> },
               { path: "services/category/:categoryId", element: <CategoryServices /> },
               { path: "service/:serviceId", element: <ServiceDetails /> },
               { path: "review/:bookingId", element: <Review /> },
