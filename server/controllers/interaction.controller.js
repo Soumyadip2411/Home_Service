@@ -119,14 +119,14 @@ export async function addInteraction(request, response) {
       } else if (service) {
         // Handle regular service interactions
       if (interactionType === 'booking') {
-        serviceBoost = 2;
+        serviceBoost = 0.8;
         tagBoost = 1;
       } else if (interactionType === 'click') {
-        serviceBoost = 1.6;
+        serviceBoost = 0.5;
         tagBoost = 0.4;
       } else if (interactionType === 'view') {
-        serviceBoost = 1;
-        tagBoost = 0.3;
+        serviceBoost = 0.1;
+        tagBoost = 0.2;
       }
         
         // Apply recency factor
