@@ -97,7 +97,7 @@ export async function addInteraction(request, response) {
         const { tags, botTagProfile } = request.body;
         
         if (tags && Array.isArray(tags)) {
-          const botTagBoost = 0.7; // Better than view (0.3), worse than booking (1.0)
+          const botTagBoost = 0.75; // Better than view (0.3), worse than booking (1.0)
           tags.forEach(tag => {
             if (profile[tag] !== undefined) {
               // Existing tag: give 70% of normal boost

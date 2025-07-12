@@ -8,7 +8,7 @@ import Review from '../models/review.model.js';
 
 const weights = {
   collaborative: 0.3,
-  content: 0.5,        // Content-based gets highest weight (advanced)
+  content: 0.6,        // Content-based gets highest weight (advanced)
   location: 0.1,
   popularity: 0.1
 };
