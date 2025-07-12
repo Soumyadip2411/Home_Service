@@ -93,16 +93,50 @@ export const getAllServices = async (req, res) => {
       },
     ];
 
-    // Add search filter if search query is provided
+    // Enhanced search filter if search query is provided
     if (search && search.trim().length > 0) {
-      const searchRegex = new RegExp(search.trim(), 'i');
+      const searchTerm = search.trim();
+      const searchRegex = new RegExp(searchTerm, 'i');
+      const prefixRegex = new RegExp(`^${searchTerm}`, 'i'); // For prefix matching
+      
       pipeline.unshift({
         $match: {
           $or: [
+            // Title and description matches
             { title: searchRegex },
             { description: searchRegex },
-            { tags: { $in: [searchRegex] } },
-            { "category.name": searchRegex }
+            
+            // Category name matches
+            { "category.name": searchRegex },
+            
+            // Provider name matches (including prefix)
+            { "provider.name": searchRegex },
+            
+            // Tag matches (exact and prefix)
+            { 
+              tags: { 
+                $elemMatch: { 
+                  $regex: searchTerm, 
+                  $options: 'i' 
+                } 
+              } 
+            },
+            
+            // Tag prefix matches
+            { 
+              tags: { 
+                $elemMatch: { 
+                  $regex: `^${searchTerm}`, 
+                  $options: 'i' 
+                } 
+              } 
+            },
+            
+            // Provider name prefix matches
+            { "provider.name": prefixRegex },
+            
+            // Category name prefix matches
+            { "category.name": prefixRegex }
           ]
         }
       });
@@ -115,7 +149,7 @@ export const getAllServices = async (req, res) => {
 
     const services = await Service.aggregate(pipeline);
 
-    // If search is provided, also use AI-powered tag search for better results
+    // Enhanced AI-powered tag search for better results
     if (search && search.trim().length > 0) {
       try {
         const aiFiltered = searchServicesByTags(search, services);

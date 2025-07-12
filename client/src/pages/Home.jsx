@@ -8,7 +8,10 @@ const Home = () => {
     <div 
       className="min-h-screen bg-cover bg-center relative"
       style={{
-        backgroundImage: "url('https://images.unsplash.com/photo-1521783593447-5702b9bfd267?q=80&w=1470&auto=format&fit=crop')"
+        backgroundImage: "url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80')", // Elegant mountain lake
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat"
       }}
     >
       <div className="absolute inset-0 bg-black/60 z-0" />

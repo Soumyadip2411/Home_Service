@@ -237,11 +237,12 @@ const generateContextualTags = (title, description, category) => {
   return contextualTags;
 };
 
-// Enhanced search function that uses tags
+// Enhanced search function that uses tags, provider names, and prefixes
 export const searchServicesByTags = (searchQuery, services) => {
   try {
     const queryTokens = tokenizer.tokenize(searchQuery.toLowerCase());
     const queryTags = new Set();
+    const searchTerm = searchQuery.toLowerCase();
     
     // Extract tags from search query
     queryTokens.forEach(token => {
@@ -252,36 +253,91 @@ export const searchServicesByTags = (searchQuery, services) => {
           queryTags.add(token);
         }
       });
+      
+      // Check against tag synonyms
+      Object.entries(tagSynonyms).forEach(([main, syns]) => {
+        if (main === token || syns.includes(token)) {
+          queryTags.add(main);
+          syns.forEach(syn => queryTags.add(syn));
+        }
+      });
     });
     
-    // Score services based on tag matches
+    // Score services based on multiple criteria
     const scoredServices = services.map(service => {
       let score = 0;
       const serviceTags = service.tags || [];
+      const providerName = (service.provider?.name || '').toLowerCase();
+      const serviceTitle = (service.title || '').toLowerCase();
+      const serviceDescription = (service.description || '').toLowerCase();
+      const categoryName = (service.category?.name || '').toLowerCase();
       
-      // Exact tag matches
+      // 1. Exact tag matches (highest priority)
       serviceTags.forEach(tag => {
-        if (queryTags.has(tag.toLowerCase())) {
-          score += 3; // High score for exact matches
+        const tagLower = tag.toLowerCase();
+        if (queryTags.has(tagLower)) {
+          score += 10; // High score for exact tag matches
         }
       });
       
-      // Partial tag matches
+      // 2. Tag prefix matches
       serviceTags.forEach(tag => {
+        const tagLower = tag.toLowerCase();
+        if (tagLower.startsWith(searchTerm) || searchTerm.startsWith(tagLower)) {
+          score += 8; // High score for prefix matches
+        }
+      });
+      
+      // 3. Provider name matches
+      if (providerName.includes(searchTerm)) {
+        score += 7; // High score for provider matches
+      }
+      
+      // 4. Provider name prefix matches
+      if (providerName.startsWith(searchTerm)) {
+        score += 6; // Good score for provider prefix
+      }
+      
+      // 5. Category name matches
+      if (categoryName.includes(searchTerm)) {
+        score += 5; // Good score for category matches
+      }
+      
+      // 6. Title matches
+      if (serviceTitle.includes(searchTerm)) {
+        score += 4; // Good score for title matches
+      }
+      
+      // 7. Partial tag matches
+      serviceTags.forEach(tag => {
+        const tagLower = tag.toLowerCase();
         queryTags.forEach(queryTag => {
-          if (tag.toLowerCase().includes(queryTag) || queryTag.includes(tag.toLowerCase())) {
-            score += 1; // Lower score for partial matches
+          if (tagLower.includes(queryTag) || queryTag.includes(tagLower)) {
+            score += 3; // Medium score for partial matches
           }
         });
       });
       
-      // Title and description matches
-      const serviceText = `${service.title} ${service.description || ''}`.toLowerCase();
+      // 8. Description matches
+      if (serviceDescription.includes(searchTerm)) {
+        score += 2; // Lower score for description matches
+      }
+      
+      // 9. Fuzzy matching for similar terms
       queryTokens.forEach(token => {
-        if (serviceText.includes(token)) {
-          score += 0.5; // Lower score for text matches
-        }
+        serviceTags.forEach(tag => {
+          const tagLower = tag.toLowerCase();
+          // Check for similar terms (e.g., "clean" vs "cleaning")
+          if (tagLower.includes(token) || token.includes(tagLower)) {
+            score += 1; // Low score for fuzzy matches
+          }
+        });
       });
+      
+      // 10. Boost for services with higher ratings
+      if (service.avgRating && service.avgRating >= 4.0) {
+        score += 1; // Small boost for highly rated services
+      }
       
       return { ...service, searchScore: score };
     });
