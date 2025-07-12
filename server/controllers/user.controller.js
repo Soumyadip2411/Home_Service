@@ -236,6 +236,32 @@ export async function uploadAvatar(request, response) {
   }
 }
 
+export async function removeAvatar(request, response) {
+  try {
+    const userId = request.userId; // auth middleware
+
+    const updateUser = await UserModel.findByIdAndUpdate(userId, {
+      avatar: "",
+    });
+
+    return response.json({
+      message: "Avatar removed successfully",
+      success: true,
+      error: false,
+      data: {
+        _id: userId,
+        avatar: "",
+      },
+    });
+  } catch (error) {
+    return response.status(500).json({
+      message: error.message || error,
+      error: true,
+      success: false,
+    });
+  }
+}
+
 //update user details
 export async function updateUserDetails(request, response) {
   try {

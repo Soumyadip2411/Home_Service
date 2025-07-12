@@ -451,13 +451,24 @@ const Services = () => {
                           whileHover={{ scale: 1.1, rotate: 5 }}
                           className="relative"
                         >
-                          <img
-                            src={service.provider?.avatar || `https://ui-avatars.com/api/?name=${service.provider?.name}`}
-                            alt={service.provider?.name}
-                            className="w-12 h-12 rounded-full object-cover ring-2 ring-green-500/30 group-hover:ring-green-500 transition-all duration-300"
-                          />
-                          
-                          
+                          {service.provider?.avatar ? (
+                            <img
+                              src={service.provider.avatar}
+                              alt={service.provider?.name}
+                              className="w-12 h-12 rounded-full object-cover ring-2 ring-green-500/30 group-hover:ring-green-500 transition-all duration-300"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-bold ring-2 ring-green-500/30 group-hover:ring-green-500 transition-all duration-300">
+                              {service.provider?.name
+                                ? service.provider.name
+                                    .split(' ')
+                                    .map(word => word.charAt(0))
+                                    .join('')
+                                    .toUpperCase()
+                                    .slice(0, 2)
+                                : 'SP'}
+                            </div>
+                          )}
                         </motion.div>
                         <div>
                           <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
