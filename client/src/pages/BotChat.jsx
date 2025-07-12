@@ -107,13 +107,19 @@ const BotChat = () => {
     localStorage.setItem('botTagProfile', JSON.stringify(profile));
   }
 
-  // Update bot tag profile in localStorage with fixed boost
+  // Update bot tag profile in localStorage with reduced boost for existing tags
   function updateBotTagProfile(newTags) {
     let profile = getBotTagProfile();
     
-    // Add/increase new bot tags with fixed boost
+    // Add/increase new bot tags with reduced boost for existing tags
     for (let tag of newTags) {
-      profile[tag] = (profile[tag] || 0) + BOT_TAG_BOOST;
+      if (profile[tag] !== undefined) {
+        // Existing tag: give 70% of normal boost
+        profile[tag] += (BOT_TAG_BOOST * 0.7);
+      } else {
+        // New tag: give full boost
+        profile[tag] = BOT_TAG_BOOST;
+      }
     }
     
     setBotTagProfile(profile);
@@ -196,12 +202,6 @@ const BotChat = () => {
         
         // Sync bot tags to backend via interaction controller
         try {
-          console.log('Sending bot tags to backend:', {
-            interactionType: 'bot_chat',
-            tags: filteredTags,
-            botTagProfile: updatedProfile
-          });
-          
           // Create a virtual service interaction for bot tags
           const response = await axios.post('/api/interactions/bot-chat', {
             interactionType: 'bot_chat',
@@ -209,7 +209,6 @@ const BotChat = () => {
             botTagProfile: updatedProfile
           });
           
-          console.log('Bot tags synced successfully:', response.data);
         } catch (syncError) {
           console.error('Failed to sync bot tags to backend:', syncError);
           console.error('Error details:', syncError.response?.data);

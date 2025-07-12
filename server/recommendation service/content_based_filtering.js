@@ -50,7 +50,7 @@ function createUserProfileDocument(tagProfile) {
 // Multi-approach scoring system
 function calculateMultiApproachScore(service, userProfileDoc, tagProfile) {
   const serviceTokens = [
-    ...(service.title ? tokenizer.tokenize(service.title.toLowerCase()) : []),
+      ...(service.title ? tokenizer.tokenize(service.title.toLowerCase()) : []),
     ...(service.tags || []).map(tag => tag.toLowerCase()),
     ...(service.category?.name ? [service.category.name.toLowerCase()] : []),
     ...(service.description ? tokenizer.tokenize(service.description.toLowerCase()) : [])

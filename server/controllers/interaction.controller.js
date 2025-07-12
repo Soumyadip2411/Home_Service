@@ -76,8 +76,7 @@ export async function addInteraction(request, response) {
 
     // --- BOOST LOGIC START ---
     const user = await User.findById(request.userId);
-    console.log('Interaction - User found:', user ? 'Yes' : 'No');
-    console.log('Interaction - User ID:', request.userId);
+
     const service = serviceId === 'bot-chat' ? null : await Service.findById(serviceId);
     if (user) {
       let profile = user.user_tag_profile || {};
@@ -96,15 +95,17 @@ export async function addInteraction(request, response) {
       if (interactionType === 'bot_chat') {
         // Handle bot chat interaction - use tags from request body
         const { tags, botTagProfile } = request.body;
-        console.log('Bot chat interaction - User ID:', request.userId);
-        console.log('Bot chat interaction - Tags:', tags);
-        console.log('Bot chat interaction - BotTagProfile:', botTagProfile);
-        console.log('Current user profile before update:', profile);
         
         if (tags && Array.isArray(tags)) {
           const botTagBoost = 0.7; // Better than view (0.3), worse than booking (1.0)
           tags.forEach(tag => {
-            profile[tag] = (profile[tag] || 0) + botTagBoost;
+            if (profile[tag] !== undefined) {
+              // Existing tag: give 70% of normal boost
+              profile[tag] += (botTagBoost * 0.7);
+            } else {
+              // New tag: give full boost
+              profile[tag] = botTagBoost;
+            }
           });
         }
         // Also update with the complete bot tag profile if provided
@@ -114,33 +115,45 @@ export async function addInteraction(request, response) {
           }
         }
         
-        console.log('Updated user profile:', profile);
+      
       } else if (service) {
         // Handle regular service interactions
-        if (interactionType === 'booking') {
-          serviceBoost = 2;
-          tagBoost = 1;
-        } else if (interactionType === 'click') {
-          serviceBoost = 1.6;
-          tagBoost = 0.4;
-        } else if (interactionType === 'view') {
-          serviceBoost = 1;
-          tagBoost = 0.3;
-        }
+      if (interactionType === 'booking') {
+        serviceBoost = 2;
+        tagBoost = 1;
+      } else if (interactionType === 'click') {
+        serviceBoost = 1.6;
+        tagBoost = 0.4;
+      } else if (interactionType === 'view') {
+        serviceBoost = 1;
+        tagBoost = 0.3;
+      }
         
         // Apply recency factor
-        const recencyFactor = getRecencyFactor(now);
-        serviceBoost *= recencyFactor;
-        tagBoost *= recencyFactor;
+      const recencyFactor = getRecencyFactor(now);
+      serviceBoost *= recencyFactor;
+      tagBoost *= recencyFactor;
         
-        // Boost service tags
-        (service.tags || []).forEach(tag => {
-          profile[tag] = (profile[tag] || 0) + tagBoost;
-        });
+        // Boost service tags with reduced boost for existing tags
+      (service.tags || []).forEach(tag => {
+        if (profile[tag] !== undefined) {
+          // Existing tag: give 70% of normal boost
+          profile[tag] += (tagBoost * 0.7);
+        } else {
+          // New tag: give full boost
+          profile[tag] = tagBoost;
+        }
+      });
         
-        // Boost service itself
-        const serviceTag = `service_${serviceId}`;
-        profile[serviceTag] = (profile[serviceTag] || 0) + serviceBoost;
+      // Boost service itself with reduced boost for existing service tag
+      const serviceTag = `service_${serviceId}`;
+      if (profile[serviceTag] !== undefined) {
+        // Existing service tag: give 70% of normal boost
+        profile[serviceTag] += (serviceBoost * 0.7);
+      } else {
+        // New service tag: give full boost
+        profile[serviceTag] = serviceBoost;
+      }
       }
       
       // Prune low-weight tags
@@ -150,9 +163,9 @@ export async function addInteraction(request, response) {
       profile = keepTopTags(profile);
       
       user.user_tag_profile = profile;
-      console.log('Saving user with updated profile:', profile);
+      
       await user.save();
-      console.log('User saved successfully');
+    
     }
     // --- BOOST LOGIC END ---
 
