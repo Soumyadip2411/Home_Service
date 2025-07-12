@@ -1,4 +1,4 @@
-import { getHybridRecommendations, getHybridRecommendationsWithQueryBoost, getTagBasedRecommendations, getProfileBasedRecommendations } from "../recommendation service/hybrid_filtering.js";
+import { getAdvancedHybridRecommendations } from "../recommendation service/hybrid_filtering.js";
 import Service from "../models/service.model.js";
 import { generateTags } from "../utils/tagGenerator.js";
 import User from '../models/user.model.js';
@@ -47,22 +47,32 @@ export const getRecommendations = async (req, res) => {
         message: "Location coordinates are required"
       });
     }
-    // Use profile-based recommendations
-    const recommendations = await getProfileBasedRecommendations(userId, lat, lng);
+
+    // Get user's tag profile from database (fallback)
+    const user = await User.findById(userId);
+    const tagProfile = user?.user_tag_profile || {};
+
+    // Use advanced hybrid recommendations with database profile
+    const recommendations = await getAdvancedHybridRecommendations(userId, lat, lng, tagProfile);
+
     // Pagination
     const startIndex = (page - 1) * limit;
     const endIndex = page * limit;
     const paginated = recommendations.slice(startIndex, endIndex);
+
     // Get full service details
     const serviceIds = paginated.map(rec => rec._id);
     const services = await Service.find({ _id: { $in: serviceIds } })
       .populate("category provider")
       .lean();
+
     // Map services with their scores
     const servicesWithScores = services.map(service => ({
       ...service,
-      score: paginated.find(r => r._id === service._id.toString())?.score || 0
+      score: paginated.find(r => r._id === service._id.toString())?.score || 0,
+      breakdown: paginated.find(r => r._id === service._id.toString())?.breakdown || null
     }));
+
     res.json({
       success: true,
       data: servicesWithScores,
@@ -89,23 +99,32 @@ export const getQueryRecommendations = async (req, res) => {
     if (!query || !lat || !lng) {
       return res.status(400).json({ success: false, message: "Query, lat, and lng are required" });
     }
-    // DO NOT update backend profile here; frontend manages tag profile in real time
-    // Only use the backend profile for recommendations
-    const recommendations = await getProfileBasedRecommendations(userId, lat, lng);
+
+    // Get user's tag profile from database (fallback)
+    const user = await User.findById(userId);
+    const tagProfile = user?.user_tag_profile || {};
+
+    // Use advanced hybrid recommendations
+    const recommendations = await getAdvancedHybridRecommendations(userId, lat, lng, tagProfile);
+
     // Pagination
     const startIndex = (page - 1) * limit;
     const endIndex = page * limit;
     const paginated = recommendations.slice(startIndex, endIndex);
+
     // Get full service details
     const serviceIds = paginated.map(rec => rec._id);
     const services = await Service.find({ _id: { $in: serviceIds } })
       .populate("category provider")
       .lean();
+
     // Map services with their scores
     const servicesWithScores = services.map(service => ({
       ...service,
-      score: paginated.find(r => r._id === service._id.toString())?.score || 0
+      score: paginated.find(r => r._id === service._id.toString())?.score || 0,
+      breakdown: paginated.find(r => r._id === service._id.toString())?.breakdown || null
     }));
+
     res.json({
       success: true,
       data: servicesWithScores,
@@ -129,23 +148,32 @@ export const getTagRecommendations = async (req, res) => {
     if (!tags || !lat || !lng) {
       return res.status(400).json({ success: false, message: "Tags, lat, and lng are required" });
     }
-    // DO NOT update backend profile here; frontend manages tag profile in real time
-    // Only use the backend profile for recommendations
-    const recommendations = await getProfileBasedRecommendations(userId, lat, lng);
+
+    // Get user's tag profile from database (fallback)
+    const user = await User.findById(userId);
+    const tagProfile = user?.user_tag_profile || {};
+
+    // Use advanced hybrid recommendations
+    const recommendations = await getAdvancedHybridRecommendations(userId, lat, lng, tagProfile);
+
     // Pagination
     const startIndex = (page - 1) * limit;
     const endIndex = page * limit;
     const paginated = recommendations.slice(startIndex, endIndex);
+
     // Get full service details
     const serviceIds = paginated.map(rec => rec._id);
     const services = await Service.find({ _id: { $in: serviceIds } })
       .populate("category provider")
       .lean();
+
     // Map services with their scores
     const servicesWithScores = services.map(service => ({
       ...service,
-      score: paginated.find(r => r._id === service._id.toString())?.score || 0
+      score: paginated.find(r => r._id === service._id.toString())?.score || 0,
+      breakdown: paginated.find(r => r._id === service._id.toString())?.breakdown || null
     }));
+
     res.json({
       success: true,
       data: servicesWithScores,
@@ -242,92 +270,56 @@ export const replaceUserTagProfile = async (req, res) => {
   }
 };
 
-// POST /api/recommendations/profile-tags
+// POST /api/recommendations/profile-tags - MAIN ENDPOINT FOR REAL-TIME RECOMMENDATIONS
 export const getProfileTagsHybridRecommendations = async (req, res) => {
   try {
     const { profile, lat, lng, page = 1, limit = 10 } = req.body;
     if (!profile || !lat || !lng) {
       return res.status(400).json({ success: false, message: "Profile, lat, and lng are required" });
     }
-    const Service = (await import('../models/service.model.js')).default;
-    const Review = (await import('../models/review.model.js')).default;
-    const allServices = await Service.find().populate('category provider');
-    // Get location scores
-    const locationResults = await (await import('../recommendation service/location_based_filtering.js')).getLocationRecommendations(lat, lng);
-    const locationMap = new Map();
-    locationResults.forEach(({ _id, distance }) => {
-      locationMap.set(_id.toString(), 1 / (distance + 1));
-    });
-    // Get popularity (number of reviews)
-    const reviewCounts = {};
-    const reviewDocs = await Review.aggregate([
-      { $group: { _id: "$service", count: { $sum: 1 } } }
-    ]);
-    reviewDocs.forEach(r => { reviewCounts[r._id.toString()] = r.count; });
-    const maxReviews = Math.max(1, ...Object.values(reviewCounts));
-    // Prepare for content-based filtering
-    const { getContentSimilarityScore } = await import('../recommendation service/content_based_filtering.js');
-    // Prepare for collaborative filtering
-    const { getCollaborativeScore } = await import('../recommendation service/collaborative_filtering.js');
-    // User profile as a pseudo-document (concatenate tags, weighted by their score)
-    const userProfileDoc = Object.entries(profile).map(([tag, weight]) => Array(Math.round(weight * 10)).fill(tag).join(' ')).join(' ');
-    // Score each service
-    const scored = allServices.map(service => {
-      const serviceTags = (service.tags || []).map(t => t.toLowerCase().replace(/[^a-z0-9]/g, '').trim());
-      // Tag profile score: use normalized and fuzzy matching with priority
-      let tagScore = 0;
-      for (let tag in profile) {
-        const normTag = tag.toLowerCase().replace(/[^a-z0-9]/g, '').trim();
-        for (let sTag of serviceTags) {
-          const dist = natural.LevenshteinDistance(sTag, normTag);
-          if (sTag === normTag) {
-            tagScore += profile[tag]; // Full match
-          } else if (dist === 1) {
-            tagScore += profile[tag] * 0.7; // Close fuzzy match
-          } else if (dist === 2) {
-            tagScore += profile[tag] * 0.4; // Slightly less close
-          }
-        }
-      }
-      // Location score
-      const locationScore = locationMap.get(service._id.toString()) || 0;
-      // Popularity score (normalized)
-      const popularityScore = (reviewCounts[service._id.toString()] || 0) / maxReviews;
-      // Content-based score (TF-IDF similarity)
-      let contentScore = 0;
-      try {
-        contentScore = getContentSimilarityScore(userProfileDoc, service);
-      } catch (e) {
-        contentScore = 0;
-      }
-      // Collaborative score
-      let collabScore = 0;
-      try {
-        collabScore = getCollaborativeScore(profile, service);
-      } catch (e) {
-        collabScore = 0;
-      }
-      // Hybrid score (user's requested weights)
-      const finalScore = tagScore * 0.6 + contentScore * 0.4 + collabScore * 0.3 + locationScore * 0.1;
-      return { ...service.toObject(), score: finalScore, tagScore, contentScore, collabScore, locationScore, popularityScore };
-    });
-    scored.sort((a, b) => b.score - a.score);
+
+    // Use the frontend tag profile (real-time) for recommendations
+    // This ensures we use the most up-to-date user preferences
+    const recommendations = await getAdvancedHybridRecommendations(
+      req.userId, 
+      lat, 
+      lng, 
+      profile  // ← Frontend tag profile (real-time)
+    );
+
     // Pagination
     const startIndex = (page - 1) * limit;
     const endIndex = page * limit;
-    const paginated = scored.slice(startIndex, endIndex);
+    const paginated = recommendations.slice(startIndex, endIndex);
+
+    // Get full service details
+    const serviceIds = paginated.map(rec => rec._id);
+    const services = await Service.find({ _id: { $in: serviceIds } })
+      .populate("category provider")
+      .lean();
+
+    // Map services with their scores and breakdowns
+    const servicesWithScores = services.map(service => {
+      const rec = paginated.find(r => r._id === service._id.toString());
+      return {
+        ...service,
+        score: rec?.score || 0,
+        contentBreakdown: rec?.breakdown || null // Include for debugging
+      };
+    });
+
     res.json({
       success: true,
-      data: paginated,
+      data: servicesWithScores,
       pagination: {
         page: Number(page),
         limit: Number(limit),
-        total: scored.length,
-        totalPages: Math.ceil(scored.length / limit)
+        total: recommendations.length,
+        totalPages: Math.ceil(recommendations.length / limit)
       }
     });
   } catch (error) {
-    console.error("Profile-tags hybrid recommendation error:", error);
-    res.status(500).json({ success: false, message: "Failed to generate hybrid recommendations" });
+    console.error("Advanced hybrid recommendation error:", error);
+    res.status(500).json({ success: false, message: "Failed to generate recommendations" });
   }
 };
