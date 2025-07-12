@@ -19,6 +19,7 @@ import chatRoomRouter from "./route/chatRoom.route.js";
 import botRouter from "./route/bot.route.js";
 import botChatRouter from './route/botChat.route.js';
 import notificationRouter from './route/notification.route.js';
+import adminRouter from './route/admin.route.js';
 
 const app = express();
 
@@ -58,6 +59,7 @@ app.use("/api/chat", chatRoomRouter);
 app.use("/api/chat/bot", botRouter);
 app.use('/api/chat/bot-chat', botChatRouter);
 app.use('/api/notifications', notificationRouter);
+app.use('/api/admin', adminRouter);
 
 connectDB().then(() => {
   app.listen(PORT, () => {

@@ -6,7 +6,7 @@ import { logout, setUserDetails } from '../store/userSlice';
 import { toast } from 'react-hot-toast';
 import Axios from '../utils/Axios';
 import SummaryApi from '../common/SummaryApi';
-import { FiMapPin, FiChevronDown, FiBell, FiCamera, FiUser, FiSettings } from 'react-icons/fi';
+import { FiMapPin, FiChevronDown, FiBell, FiCamera, FiUser, FiSettings, FiShield } from 'react-icons/fi';
 import { FaRobot } from 'react-icons/fa';
 import AvatarUpload from './AvatarUpload';
 
@@ -323,6 +323,19 @@ const Header = () => {
                       >
                         <FiSettings className="text-sm" />
                         {providerRequestLoading ? 'Requesting...' : 'Become Provider'}
+                      </button>
+                    )}
+                    
+                    {user?.email === 'soumyadip2411@gmail.com' && (
+                      <button
+                        onClick={() => {
+                          navigate('/admin');
+                          setShowProfileMenu(false);
+                        }}
+                        className="w-full px-3 py-2 text-left text-sm text-purple-600 hover:bg-purple-50 rounded flex items-center gap-2"
+                      >
+                        <FiShield className="text-sm" />
+                        Admin Dashboard
                       </button>
                     )}
                     

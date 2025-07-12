@@ -11,6 +11,7 @@ import genertedRefreshToken from "../utils/generatedRefreshToken.js";
 import uploadImageClodinary from "../utils/uploadImageClodinary.js";
 import generatedOtp from "../utils/generatedOtp.js";
 import jwt from "jsonwebtoken";
+import ProviderRequestModel from "../models/providerRequest.model.js";
 
 export async function registerUserController(request, response) {
   try {
@@ -553,11 +554,38 @@ export async function requestProviderRoleController(request, response) {
         success: false
       });
     }
+
+    // Check if user already has a pending request
+    const existingRequest = await ProviderRequestModel.findOne({
+      userId: userId,
+      status: "pending"
+    });
+
+    if (existingRequest) {
+      return response.status(400).json({
+        message: "You already have a pending provider request",
+        error: true,
+        success: false
+      });
+    }
+
+    // Create provider request record
+    const providerRequest = new ProviderRequestModel({
+      userId: userId,
+      userName: user.name,
+      userEmail: user.email,
+      status: "pending"
+    });
+
+    await providerRequest.save();
+
+    // Send email to admin
     await sendEmail({
       sendTo: "soumyadip2411@gmail.com",
       subject: "Provider Request from HomeService User",
       html: providerRequestTemplate({ userId: user._id, userName: user.name })
     });
+
     return response.json({
       message: "Provider request sent successfully",
       error: false,

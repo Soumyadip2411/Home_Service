@@ -19,6 +19,7 @@ import Review from "../components/Review";
 import Recommendation from "../components/Recommendation";
 import ChatPage from '../pages/ChatPage';
 import BotChat from '../pages/BotChat';
+import AdminDashboard from '../pages/AdminDashboard';
 import { useSelector } from 'react-redux';
 import React from 'react';
 
@@ -64,6 +65,7 @@ const router = createBrowserRouter([
           { path: "chat/:bookingId", element: <ChatPage /> },
           { path: "bot-chat", element: <BotChat /> },
           { path: "book-service/:serviceId", element: <BookService /> },
+          { path: "admin", element: <AdminDashboard /> },
         ],
       },
     ],
