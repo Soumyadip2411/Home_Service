@@ -19,73 +19,11 @@ const getDistance = (lat1, lon1, lat2, lon2) => {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
-const TAG_DECAY = 0.8;
-const TAG_BOOSTS = { bot: 1.0, content: 0.5, collab: 0.4 };
-
-// Utility to get the full tag profile breakdown from localStorage
-function getTagProfileBreakdown() {
-  return JSON.parse(localStorage.getItem('userTagProfileBreakdown') || '{}');
-}
-
-// Utility to set the full tag profile breakdown in localStorage
-function setTagProfileBreakdown(profile) {
-  localStorage.setItem('userTagProfileBreakdown', JSON.stringify(profile));
-}
-
-// Utility to get the flat tag profile (total scores)
-function getTagProfile() {
-  const breakdown = getTagProfileBreakdown();
-  const flat = {};
-  for (let tag in breakdown) {
-    flat[tag] = breakdown[tag].total;
-  }
-  return flat;
-}
-
-// Utility to sync tag profile to backend
-async function syncTagProfileToBackend(profile) {
-  try {
-    await Axios.post('/api/recommendations/replace-profile', { profile }, {
-      headers: {
-        'auth-token': localStorage.getItem('token'),
-      },
-    });
-  } catch (err) {
-    // Optionally handle error
-  }
-}
-
-// Update tag profile breakdown in localStorage
-function updateLocalTagProfile(newTags, source) {
-  let profile = getTagProfileBreakdown();
-  // Decay all tags
-  for (let tag in profile) {
-    for (let src of ['bot', 'content', 'collab']) {
-      profile[tag][src] = (profile[tag][src] || 0) * TAG_DECAY;
-    }
-    profile[tag].total = (profile[tag].bot || 0) + (profile[tag].content || 0) + (profile[tag].collab || 0);
-  }
-  // Add/increase new tags
-  for (let tag of newTags) {
-    if (!profile[tag]) profile[tag] = { bot: 0, content: 0, collab: 0, total: 0 };
-    profile[tag][source] = (profile[tag][source] || 0) + (TAG_BOOSTS[source] || 0.2);
-    profile[tag].total = (profile[tag].bot || 0) + (profile[tag].content || 0) + (profile[tag].collab || 0);
-  }
-  setTagProfileBreakdown(profile);
-  // Also update the flat profile for compatibility
-  const flatProfile = getTagProfile();
-  localStorage.setItem('userTagProfile', JSON.stringify(flatProfile));
-  // Sync to backend in real time
-  syncTagProfileToBackend(flatProfile);
-  return flatProfile;
-}
-
 const Recommendation = ({ searchQuery }) => {
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [showDebug, setShowDebug] = useState(false);
   const navigate = useNavigate();
 
   // Get coordinates from localStorage
@@ -110,23 +48,19 @@ const Recommendation = ({ searchQuery }) => {
   const loadRecommendations = async (pageNumber = 1, reset = false) => {
     try {
       setLoading(true);
-      let response;
-      // Always use userTagProfile from localStorage
-      const tagProfile = getTagProfile();
-      const tagBreakdown = getTagProfileBreakdown();
-      response = await Axios.post('/api/recommendations/profile-tags', {
-        profile: tagProfile,
-        lat: coords.lat,
-        lng: coords.lng,
-        page: pageNumber,
-        limit: 12
-      }, {
+      // Use the main recommendation endpoint that uses database profile for hybrid recommendations
+      const response = await Axios.get('/api/recommendations', {
+        params: {
+          lat: coords.lat,
+          lng: coords.lng,
+          page: pageNumber,
+          limit: 12
+        },
         headers: {
           'auth-token': localStorage.getItem('token'),
         },
       });
       let recs = response.data.data;
-      // No need to re-score, backend does hybrid scoring
       if (reset) {
         setRecommendations(recs);
         setPage(1);
@@ -145,9 +79,9 @@ const Recommendation = ({ searchQuery }) => {
     if (coords.lat && coords.lng) {
       loadRecommendations(1, true);
     }
-    // Listen for changes to userTagProfile in localStorage
+    // Listen for changes to botTagProfile to refresh recommendations when bot chat updates
     const handleStorageChange = (e) => {
-      if (e.key === 'userTagProfile' || e.key === 'userTagProfileBreakdown') {
+      if (e.key === 'botTagProfile') {
         loadRecommendations(1, true);
       }
     };
@@ -174,10 +108,7 @@ const Recommendation = ({ searchQuery }) => {
 
   const handleServiceClick = async (serviceId, serviceTags = []) => {
     try {
-      // Update local tag profile with service tags (content-based)
-      if (serviceTags.length > 0) {
-        updateLocalTagProfile(serviceTags, 'content');
-      }
+      // Track service interaction (backend will update database profile)
       await Axios.post(`/api/interactions/${serviceId}`, {
         interactionType: "view"
       });
@@ -215,38 +146,6 @@ const Recommendation = ({ searchQuery }) => {
           
         </div>
       </div>
-
-      {showDebug && (
-        <div className="mb-6 p-4 bg-gray-50 border rounded text-xs overflow-x-auto">
-          <div className="mb-2 font-semibold">Your Tag Profile Breakdown:</div>
-          <pre className="mb-2 bg-white p-2 rounded border max-h-40 overflow-y-auto">{JSON.stringify(getTagProfileBreakdown(), null, 2)}</pre>
-          <div className="mb-2 font-semibold">Current Recommendations (with scores):</div>
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b">
-                <th className="pr-2">Title</th>
-                <th className="pr-2">tagScore</th>
-                <th className="pr-2">contentScore</th>
-                <th className="pr-2">locationScore</th>
-                <th className="pr-2">popularityScore</th>
-                <th className="pr-2">finalScore</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recommendations.slice(0, 5).map((s, i) => (
-                <tr key={s._id + i} className="border-b">
-                  <td className="pr-2">{s.title}</td>
-                  <td className="pr-2">{(s.tagScore ?? 0).toFixed(3)}</td>
-                  <td className="pr-2">{(s.contentScore ?? 0).toFixed(3)}</td>
-                  <td className="pr-2">{(s.locationScore ?? 0).toFixed(3)}</td>
-                  <td className="pr-2">{(s.popularityScore ?? 0).toFixed(3)}</td>
-                  <td className="pr-2">{(s.score ?? 0).toFixed(3)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {recommendations
@@ -322,11 +221,9 @@ const Recommendation = ({ searchQuery }) => {
       )}
 
       {/* (Optional) Debug section to show tag profile breakdown */}
-      {/* <pre>{JSON.stringify(getTagProfileBreakdown(), null, 2)}</pre> */}
+      {/* <pre>{JSON.stringify(getBotTagProfile(), null, 2)}</pre> */}
     </div>
   );
 };
 
 export default Recommendation;
-
-export { updateLocalTagProfile };

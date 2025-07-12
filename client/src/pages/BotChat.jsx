@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from '../utils/Axios';
 import { FaRobot, FaStar, FaMapMarkerAlt } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom';
 
 const BotChat = () => {
   const [messages, setMessages] = useState([]);
@@ -49,9 +49,9 @@ const BotChat = () => {
     } catch {}
   };
 
-  // Tag profile update logic for localStorage
+  // Tag profile update logic for localStorage - SIMPLIFIED FOR BOT CHAT ONLY
+  const BOT_TAG_BOOST = 0.7; // Better than view (0.3), worse than booking (1.0)
   const TAG_DECAY = 0.8;
-  const TAG_BOOSTS = { bot: 1.0, content: 0.5, collab: 0.4 };
   const MAX_BOT_TAGS = 3; // Maximum tags to add from bot responses
 
   // Helper function to filter and prioritize bot tags
@@ -102,64 +102,32 @@ const BotChat = () => {
       .map(item => item.tag);
   };
 
-  // Utility to get the full tag profile breakdown from localStorage
-  function getTagProfileBreakdown() {
-    return JSON.parse(localStorage.getItem('userTagProfileBreakdown') || '{}');
+  // Utility to get bot tag profile from localStorage
+  function getBotTagProfile() {
+    return JSON.parse(localStorage.getItem('botTagProfile') || '{}');
   }
 
-  // Utility to set the full tag profile breakdown in localStorage
-  function setTagProfileBreakdown(profile) {
-    localStorage.setItem('userTagProfileBreakdown', JSON.stringify(profile));
+  // Utility to set bot tag profile in localStorage
+  function setBotTagProfile(profile) {
+    localStorage.setItem('botTagProfile', JSON.stringify(profile));
   }
 
-  // Utility to get the flat tag profile (total scores)
-  function getTagProfile() {
-    const breakdown = getTagProfileBreakdown();
-    const flat = {};
-    for (let tag in breakdown) {
-      flat[tag] = breakdown[tag].total;
-    }
-    return flat;
-  }
-
-  // Utility to sync tag profile to backend
-  async function syncTagProfileToBackend(profile) {
-    try {
-      await axios.post('/api/recommendations/replace-profile', { profile }, {
-        headers: {
-          'auth-token': localStorage.getItem('token'),
-        },
-      });
-    } catch (err) {
-      // Optionally handle error
-    }
-  }
-
-  // Update tag profile breakdown in localStorage
-  function updateLocalTagProfile(newTags, source) {
-    let profile = getTagProfileBreakdown();
-    // Decay all tags
+  // Update bot tag profile in localStorage
+  function updateBotTagProfile(newTags) {
+    let profile = getBotTagProfile();
+    
+    // Decay all existing tags
     for (let tag in profile) {
-      for (let src of ['bot', 'content', 'collab']) {
-        profile[tag][src] = (profile[tag][src] || 0) * TAG_DECAY;
-      }
-      profile[tag].total = (profile[tag].bot || 0) + (profile[tag].content || 0) + (profile[tag].collab || 0);
+      profile[tag] = (profile[tag] || 0) * TAG_DECAY;
     }
-    // Add/increase new tags
+    
+    // Add/increase new bot tags
     for (let tag of newTags) {
-      if (!profile[tag]) profile[tag] = { bot: 0, content: 0, collab: 0, total: 0 };
-      profile[tag][source] = (profile[tag][source] || 0) + (TAG_BOOSTS[source] || 0.2);
-      profile[tag].total = (profile[tag].bot || 0) + (profile[tag].content || 0) + (profile[tag].collab || 0);
+      profile[tag] = (profile[tag] || 0) + BOT_TAG_BOOST;
     }
-    setTagProfileBreakdown(profile);
-    // Also update the flat profile for compatibility
-    const flatProfile = getTagProfile();
-    localStorage.setItem('userTagProfile', JSON.stringify(flatProfile));
-    // Sync to backend in real time
-    syncTagProfileToBackend(flatProfile);
-    // Clean up unnecessary localStorage fields
-    localStorage.removeItem('userTagProfileBreakdown');
-    return flatProfile;
+    
+    setBotTagProfile(profile);
+    return profile;
   }
 
   const fetchRecommendationsByProfile = async () => {
@@ -169,12 +137,15 @@ const BotChat = () => {
       const lat = parseFloat(localStorage.getItem('userLat'));
       const lng = parseFloat(localStorage.getItem('userLng'));
       if (!lat || !lng) return;
-      const profile = getTagProfile();
-      const { data } = await axios.post('/api/recommendations/profile-tags', {
-        profile,
-        lat,
-        lng
-      }, {
+      
+      // Use the main recommendation endpoint that uses database profile for hybrid recommendations
+      const { data } = await axios.get('/api/recommendations', {
+        params: {
+          lat,
+          lng,
+          page: 1,
+          limit: 3
+        },
         headers: {
           'auth-token': localStorage.getItem('token'),
         },
@@ -190,7 +161,7 @@ const BotChat = () => {
   // Listen for real-time tag profile changes (across tabs)
   useEffect(() => {
     const handleStorageChange = (e) => {
-      if (e.key === 'userTagProfile' || e.key === 'userTagProfileBreakdown') {
+      if (e.key === 'botTagProfile') {
         fetchRecommendationsByProfile();
       }
     };
@@ -217,13 +188,32 @@ const BotChat = () => {
       const botMessage = { sender: 'bot', text: data.response };
       setMessages((prev) => [...prev, botMessage]);
       await saveMessage('bot', botMessage.text);
+      
       // Extract tags from bot response and filter them
       const tagRes = await axios.post('/api/recommendations/extract-tags', { text: data.response });
       const allTags = tagRes.data.tags || [];
       const filteredTags = filterBotTags(allTags);
       
       if (filteredTags.length > 0) {
-        updateLocalTagProfile(filteredTags, 'bot');
+        // Update local bot tag profile
+        const updatedProfile = updateBotTagProfile(filteredTags);
+        
+        // Sync bot tags to backend via interaction controller
+        try {
+          // Create a virtual service interaction for bot tags
+          await axios.post('/api/interactions/bot-chat', {
+            interactionType: 'bot_chat',
+            tags: filteredTags,
+            botTagProfile: updatedProfile
+          }, {
+            headers: {
+              'auth-token': localStorage.getItem('token'),
+            },
+          });
+        } catch (syncError) {
+          console.error('Failed to sync bot tags to backend:', syncError);
+        }
+        
         fetchRecommendationsByProfile();
       } else {
         setRecommendations([]);

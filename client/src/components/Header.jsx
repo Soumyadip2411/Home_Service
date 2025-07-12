@@ -15,6 +15,9 @@ const Header = () => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user);
   
+  // Check if user is logged in
+  const isLoggedIn = !!localStorage.getItem("accesstoken");
+  
   const isBookingsActive = location.pathname === '/bookings';
   const isServicesActive = location.pathname === '/services';
   const isRecommendationsActive = location.pathname === '/recommendations';
@@ -33,18 +36,13 @@ const Header = () => {
   // Add handleLogout function
   const handleLogout = async () => {
     try {
-      // Sync tag profile to backend before logout
-      const tagProfile = JSON.parse(localStorage.getItem('userTagProfile') || '{}');
-      if (Object.keys(tagProfile).length > 0) {
-        await Axios.post('/api/recommendations/replace-profile', { profile: tagProfile });
-      }
       const response = await Axios(SummaryApi.logout);
       if (response.data.success) {
         localStorage.removeItem("accesstoken");
         localStorage.removeItem("refreshToken");
         localStorage.removeItem("userLat");
         localStorage.removeItem("userLng");
-        localStorage.removeItem("userTagProfile");
+        localStorage.removeItem("botTagProfile"); // Only remove botTagProfile
         dispatch(logout());
         toast.success("Logged out successfully");
         navigate("/login");
@@ -244,14 +242,16 @@ const Header = () => {
             {/* User Profile Section */}
             <div className="relative flex items-center gap-3" ref={profileMenuRef}>
               <img
-                src={user.avatar || "https://ui-avatars.com/api/?name=" + user.name}
+                src={user?.avatar || "https://ui-avatars.com/api/?name=" + (user?.name || 'User')}
                 alt="Profile"
                 className="w-10 h-10 rounded-full border-2 border-green-500 cursor-pointer"
                 onClick={() => setShowProfileMenu((prev) => !prev)}
               />
               <div>
-                <h3 className="text-white font-medium">{user.name}</h3>
-                <p className="text-gray-300 text-sm">{user.role}</p>
+                <h3 className="text-white font-medium">
+                  {isLoggedIn ? (user?.name || user?.email?.split('@')[0] || 'Loading...') : 'Guest'}
+                </h3>
+                <p className="text-gray-300 text-sm">{user?.role || 'USER'}</p>
               </div>
               {/* Profile Dropdown */}
               {showProfileMenu && user.role === 'USER' && (

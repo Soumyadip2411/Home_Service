@@ -54,7 +54,7 @@ export async function addInteraction(request, response) {
     }
 
     // Validate interaction type
-    const validTypes = ['view', 'booking', 'click'];
+    const validTypes = ['view', 'booking', 'click', 'bot_chat'];
     if (!validTypes.includes(interactionType)) {
       return response.status(400).json({
         message: "Invalid interaction type",
@@ -76,8 +76,8 @@ export async function addInteraction(request, response) {
 
     // --- BOOST LOGIC START ---
     const user = await User.findById(request.userId);
-    const service = await Service.findById(serviceId);
-    if (user && service) {
+    const service = serviceId === 'bot-chat' ? null : await Service.findById(serviceId);
+    if (user) {
       let profile = user.user_tag_profile || {};
       const lastUpdated = user.updatedAt || user.createdAt;
       
@@ -87,30 +87,52 @@ export async function addInteraction(request, response) {
         profile[tag] *= TAG_DECAY * timeDecay;
       }
       
-      // Recency boost: more recent interactions get higher boost
+      // Handle different interaction types
       const now = new Date();
       let serviceBoost = 0, tagBoost = 0;
-      if (interactionType === 'booking') {
-        serviceBoost = 2;
-        tagBoost = 1;
-      } else if (interactionType === 'click') {
-        serviceBoost = 1.6;
-        tagBoost = 0.4;
-      } else if (interactionType === 'view') {
-        serviceBoost = 1;
-        tagBoost = 0.3;
+      
+      if (interactionType === 'bot_chat') {
+        // Handle bot chat interaction - use tags from request body
+        const { tags, botTagProfile } = request.body;
+        if (tags && Array.isArray(tags)) {
+          const botTagBoost = 0.7; // Better than view (0.3), worse than booking (1.0)
+          tags.forEach(tag => {
+            profile[tag] = (profile[tag] || 0) + botTagBoost;
+          });
+        }
+        // Also update with the complete bot tag profile if provided
+        if (botTagProfile && typeof botTagProfile === 'object') {
+          for (let tag in botTagProfile) {
+            profile[tag] = botTagProfile[tag];
+          }
+        }
+      } else if (service) {
+        // Handle regular service interactions
+        if (interactionType === 'booking') {
+          serviceBoost = 2;
+          tagBoost = 1;
+        } else if (interactionType === 'click') {
+          serviceBoost = 1.6;
+          tagBoost = 0.4;
+        } else if (interactionType === 'view') {
+          serviceBoost = 1;
+          tagBoost = 0.3;
+        }
+        
+        // Apply recency factor
+        const recencyFactor = getRecencyFactor(now);
+        serviceBoost *= recencyFactor;
+        tagBoost *= recencyFactor;
+        
+        // Boost service tags
+        (service.tags || []).forEach(tag => {
+          profile[tag] = (profile[tag] || 0) + tagBoost;
+        });
+        
+        // Boost service itself
+        const serviceTag = `service_${serviceId}`;
+        profile[serviceTag] = (profile[serviceTag] || 0) + serviceBoost;
       }
-      // Apply recency factor (always 1 for new interaction, but can be used for batch updates)
-      const recencyFactor = getRecencyFactor(now);
-      serviceBoost *= recencyFactor;
-      tagBoost *= recencyFactor;
-      // Boost tags
-      (service.tags || []).forEach(tag => {
-        profile[tag] = (profile[tag] || 0) + tagBoost;
-      });
-      // Boost service itself
-      const serviceTag = `service_${serviceId}`;
-      profile[serviceTag] = (profile[serviceTag] || 0) + serviceBoost;
       
       // Prune low-weight tags
       profile = pruneTags(profile);
