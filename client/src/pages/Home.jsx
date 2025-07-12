@@ -8,14 +8,13 @@ const Home = () => {
     <div 
       className="min-h-screen bg-cover bg-center relative"
       style={{
-        backgroundImage: "url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80')", // Elegant mountain lake
+        backgroundImage: "url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1500&q=80')", 
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat"
       }}
     >
-      <div className="absolute inset-0 bg-black/60 z-0" />
-      
+      <div className="absolute inset-0 bg-black/60 z-0" />    
       <Header />
       
       <motion.div 
