@@ -4,7 +4,8 @@ const auth = async (request, response, next) => {
   try {
     const token =
       request.cookies.accessToken ||
-      request?.headers?.authorization?.split(" ")[1];
+      request?.headers?.authorization?.split(" ")[1] ||
+      request?.headers?.['auth-token'];
 
     if (!token) {
       console.log("❌ No token found in cookies or headers");

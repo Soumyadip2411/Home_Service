@@ -56,11 +56,17 @@ const Recommendation = ({ searchQuery }) => {
           page: pageNumber,
           limit: 12
         },
-        headers: {
-          'auth-token': localStorage.getItem('token'),
-        },
       });
+      
       let recs = response.data.data;
+      
+      // Sort services by their recommendation scores (highest first)
+      recs.sort((a, b) => {
+        const scoreA = a.score || 0;
+        const scoreB = b.score || 0;
+        return scoreB - scoreA; // Descending order
+      });
+      
       if (reset) {
         setRecommendations(recs);
         setPage(1);
@@ -79,14 +85,6 @@ const Recommendation = ({ searchQuery }) => {
     if (coords.lat && coords.lng) {
       loadRecommendations(1, true);
     }
-    // Listen for changes to botTagProfile to refresh recommendations when bot chat updates
-    const handleStorageChange = (e) => {
-      if (e.key === 'botTagProfile') {
-        loadRecommendations(1, true);
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
   }, [coords, searchQuery]);
 
   const handleScroll = () => {
@@ -126,6 +124,15 @@ const Recommendation = ({ searchQuery }) => {
     );
   }
 
+  // Get top 5 recommendations sorted by score
+  const topRecommendations = recommendations
+    .sort((a, b) => {
+      const scoreA = a.score || 0;
+      const scoreB = b.score || 0;
+      return scoreB - scoreA; // Descending order
+    })
+    .slice(0, 5);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
@@ -148,9 +155,7 @@ const Recommendation = ({ searchQuery }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {recommendations
-          .slice(0, 5)
-          .map((service, index) => {
+        {topRecommendations.map((service, index) => {
             const serviceLat = service.location?.coordinates[1];
             const serviceLng = service.location?.coordinates[0];
             const distance = getDistance(coords.lat, coords.lng, serviceLat, serviceLng);
@@ -219,9 +224,6 @@ const Recommendation = ({ searchQuery }) => {
           No more services to show
         </div>
       )}
-
-      {/* (Optional) Debug section to show tag profile breakdown */}
-      {/* <pre>{JSON.stringify(getBotTagProfile(), null, 2)}</pre> */}
     </div>
   );
 };

@@ -29,9 +29,9 @@ export const getAdvancedHybridRecommendations = async (userId, lat, lng, tagProf
 
     // Normalize scores
     const maxScores = {
-      collab: Math.max(...collabResults.map(c => c.score || 0)) || 1,
-      content: Math.max(...contentResults.map(c => c.score || 0)) || 1,
-      location: Math.max(...locationResults.map(l => 1 / ((l.distance || 0) + 1))) || 1
+      collab: collabResults.length > 0 ? Math.max(...collabResults.map(c => c.score || 0)) : 1,
+      content: contentResults.length > 0 ? Math.max(...contentResults.map(c => c.score || 0)) : 1,
+      location: locationResults.length > 0 ? Math.max(...locationResults.map(l => 1 / ((l.distance || 0) + 1))) : 1
     };
 
     // Create combined scores
@@ -50,11 +50,12 @@ export const getAdvancedHybridRecommendations = async (userId, lat, lng, tagProf
 
     // Add content scores (advanced)
     contentResults.forEach(({ service, score, breakdown }) => {
-      if (service?._id && score !== undefined) {
+      if (service?._id && score !== undefined && !isNaN(score)) {
         const id = service._id.toString();
+        const normalizedScore = score / maxScores.content;
         serviceMap.set(id, {
           ...(serviceMap.get(id) || {}),
-          content: score / maxScores.content,
+          content: normalizedScore,
           contentBreakdown: breakdown // Keep detailed breakdown for debugging
         });
       }
@@ -74,14 +75,23 @@ export const getAdvancedHybridRecommendations = async (userId, lat, lng, tagProf
     // Calculate final scores with intelligent weighting
     const bookedServices = await Booking.find({ customer: userId }).distinct("service");
     let recommendations = Array.from(serviceMap.entries())
-      .map(([id, scores]) => ({
-        _id: id,
-        score: (scores.collab * weights.collaborative) +
-               (scores.content * weights.content) +
-               (scores.location * weights.location),
-        source: 'advanced-hybrid',
-        breakdown: scores.contentBreakdown // Include detailed breakdown
-      }))
+      .map(([id, scores]) => {
+        // Handle undefined scores by defaulting to 0
+        const collabScore = scores.collab || 0;
+        const contentScore = scores.content || 0;
+        const locationScore = scores.location || 0;
+        
+        const score = (collabScore * weights.collaborative) +
+                     (contentScore * weights.content) +
+                     (locationScore * weights.location);
+        
+        return {
+          _id: id,
+          score: score,
+          source: 'advanced-hybrid',
+          breakdown: scores.contentBreakdown // Include detailed breakdown
+        };
+      })
       .filter(rec => !bookedServices.includes(rec._id));
 
     // Add popularity bonuses
@@ -131,6 +141,17 @@ export const getAdvancedHybridRecommendations = async (userId, lat, lng, tagProf
 
     // Sort and return
     recommendations = recommendations.sort((a, b) => b.score - a.score);
+    
+    // If no recommendations or all scores are NaN, fallback to random services
+    if (recommendations.length === 0 || recommendations.every(r => isNaN(r.score))) {
+      const fallbackServices = await Service.find().limit(10).lean();
+      return fallbackServices.map((service, index) => ({
+        _id: service._id.toString(),
+        score: 1 - (index * 0.1), // Decreasing scores
+        source: 'fallback'
+      }));
+    }
+    
     return recommendations;
     
   } catch (error) {

@@ -308,6 +308,13 @@ export const getProfileTagsHybridRecommendations = async (req, res) => {
       };
     });
 
+    // Sort services by score (highest first)
+    servicesWithScores.sort((a, b) => {
+      const scoreA = a.score || 0;
+      const scoreB = b.score || 0;
+      return scoreB - scoreA; // Descending order
+    });
+
     res.json({
       success: true,
       data: servicesWithScores,

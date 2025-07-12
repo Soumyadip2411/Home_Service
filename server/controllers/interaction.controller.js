@@ -66,7 +66,7 @@ export async function addInteraction(request, response) {
     // Create new interaction
     const newInteraction = new Interaction({
       user: request.userId,
-      service: serviceId,
+      service: serviceId === 'bot-chat' ? null : serviceId, // Handle bot-chat case
       interactionType
     });
 
@@ -76,6 +76,8 @@ export async function addInteraction(request, response) {
 
     // --- BOOST LOGIC START ---
     const user = await User.findById(request.userId);
+    console.log('Interaction - User found:', user ? 'Yes' : 'No');
+    console.log('Interaction - User ID:', request.userId);
     const service = serviceId === 'bot-chat' ? null : await Service.findById(serviceId);
     if (user) {
       let profile = user.user_tag_profile || {};
@@ -94,6 +96,11 @@ export async function addInteraction(request, response) {
       if (interactionType === 'bot_chat') {
         // Handle bot chat interaction - use tags from request body
         const { tags, botTagProfile } = request.body;
+        console.log('Bot chat interaction - User ID:', request.userId);
+        console.log('Bot chat interaction - Tags:', tags);
+        console.log('Bot chat interaction - BotTagProfile:', botTagProfile);
+        console.log('Current user profile before update:', profile);
+        
         if (tags && Array.isArray(tags)) {
           const botTagBoost = 0.7; // Better than view (0.3), worse than booking (1.0)
           tags.forEach(tag => {
@@ -106,6 +113,8 @@ export async function addInteraction(request, response) {
             profile[tag] = botTagProfile[tag];
           }
         }
+        
+        console.log('Updated user profile:', profile);
       } else if (service) {
         // Handle regular service interactions
         if (interactionType === 'booking') {
@@ -141,7 +150,9 @@ export async function addInteraction(request, response) {
       profile = keepTopTags(profile);
       
       user.user_tag_profile = profile;
+      console.log('Saving user with updated profile:', profile);
       await user.save();
+      console.log('User saved successfully');
     }
     // --- BOOST LOGIC END ---
 

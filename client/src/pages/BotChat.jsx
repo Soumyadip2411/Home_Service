@@ -15,11 +15,7 @@ const BotChat = () => {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const { data } = await axios.get('/api/chat/bot-chat/messages', {
-          headers: {
-            'auth-token': localStorage.getItem('token'),
-          },
-        });
+              const { data } = await axios.get('/api/chat/bot-chat/messages');
         if (data.length === 0) {
           // If no history, show welcome message
           setMessages([{ sender: 'bot', text: 'Hi! I am your Home Service Assistant. How can I help you today?' }]);
@@ -49,9 +45,8 @@ const BotChat = () => {
     } catch {}
   };
 
-  // Tag profile update logic for localStorage - SIMPLIFIED FOR BOT CHAT ONLY
-  const BOT_TAG_BOOST = 0.7; // Better than view (0.3), worse than booking (1.0)
-  const TAG_DECAY = 0.8;
+  // Simplified bot tag handling - only store bot tags in localStorage
+  const BOT_TAG_BOOST = 0.7; // Fixed boost for bot chat tags
   const MAX_BOT_TAGS = 3; // Maximum tags to add from bot responses
 
   // Helper function to filter and prioritize bot tags
@@ -112,16 +107,11 @@ const BotChat = () => {
     localStorage.setItem('botTagProfile', JSON.stringify(profile));
   }
 
-  // Update bot tag profile in localStorage
+  // Update bot tag profile in localStorage with fixed boost
   function updateBotTagProfile(newTags) {
     let profile = getBotTagProfile();
     
-    // Decay all existing tags
-    for (let tag in profile) {
-      profile[tag] = (profile[tag] || 0) * TAG_DECAY;
-    }
-    
-    // Add/increase new bot tags
+    // Add/increase new bot tags with fixed boost
     for (let tag of newTags) {
       profile[tag] = (profile[tag] || 0) + BOT_TAG_BOOST;
     }
@@ -133,23 +123,31 @@ const BotChat = () => {
   const fetchRecommendationsByProfile = async () => {
     setRecLoading(true);
     setRecommendations([]);
+    
     try {
       const lat = parseFloat(localStorage.getItem('userLat'));
       const lng = parseFloat(localStorage.getItem('userLng'));
       if (!lat || !lng) return;
       
-      // Use the main recommendation endpoint that uses database profile for hybrid recommendations
-      const { data } = await axios.get('/api/recommendations', {
-        params: {
-          lat,
-          lng,
-          page: 1,
-          limit: 3
-        },
-        headers: {
-          'auth-token': localStorage.getItem('token'),
-        },
+      // Get current botTagProfile from localStorage
+      const botTagProfile = getBotTagProfile();
+      
+      // Check if botTagProfile is empty
+      if (!botTagProfile || Object.keys(botTagProfile).length === 0) {
+        setRecommendations([]);
+        setRecLoading(false);
+        return;
+      }
+      
+      // Use the profile-based recommendation endpoint with botTagProfile
+      const { data } = await axios.post('/api/recommendations/profile-tags', {
+        profile: botTagProfile,
+        lat,
+        lng,
+        page: 1,
+        limit: 3
       });
+      
       setRecommendations(data.data || []);
     } catch {
       setRecommendations([]);
@@ -158,16 +156,14 @@ const BotChat = () => {
     }
   };
 
-  // Listen for real-time tag profile changes (across tabs)
-  useEffect(() => {
-    const handleStorageChange = (e) => {
-      if (e.key === 'botTagProfile') {
-        fetchRecommendationsByProfile();
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  // Sort recommendations by score (highest first)
+  const sortedRecommendations = recommendations.sort((a, b) => {
+    const scoreA = a.score || 0;
+    const scoreB = b.score || 0;
+    return scoreB - scoreA; // Descending order
+  });
+
+  // No need for localStorage listeners since we use database profile
 
   // On mount, fetch recommendations by current profile
   useEffect(() => {
@@ -200,23 +196,36 @@ const BotChat = () => {
         
         // Sync bot tags to backend via interaction controller
         try {
-          // Create a virtual service interaction for bot tags
-          await axios.post('/api/interactions/bot-chat', {
+          console.log('Sending bot tags to backend:', {
             interactionType: 'bot_chat',
             tags: filteredTags,
             botTagProfile: updatedProfile
-          }, {
-            headers: {
-              'auth-token': localStorage.getItem('token'),
-            },
           });
+          
+          // Create a virtual service interaction for bot tags
+          const response = await axios.post('/api/interactions/bot-chat', {
+            interactionType: 'bot_chat',
+            tags: filteredTags,
+            botTagProfile: updatedProfile
+          });
+          
+          console.log('Bot tags synced successfully:', response.data);
         } catch (syncError) {
           console.error('Failed to sync bot tags to backend:', syncError);
+          console.error('Error details:', syncError.response?.data);
         }
         
+        // Fetch recommendations based on updated botTagProfile
         fetchRecommendationsByProfile();
       } else {
-        setRecommendations([]);
+        // If no tags extracted, check if we should clear recommendations
+        const currentProfile = getBotTagProfile();
+        if (!currentProfile || Object.keys(currentProfile).length === 0) {
+          setRecommendations([]);
+        } else {
+          // Still fetch recommendations with existing profile
+          fetchRecommendationsByProfile();
+        }
       }
     } catch (err) {
       const botMessage = { sender: 'bot', text: 'Sorry, I could not process your request.' };
@@ -319,8 +328,8 @@ const BotChat = () => {
               </div>
               
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {recommendations.length > 0 ? (
-                  recommendations.slice(0, 3).map((service, idx) => {
+                {sortedRecommendations.length > 0 ? (
+                  sortedRecommendations.slice(0, 3).map((service, idx) => {
                     const coords = {
                       lat: parseFloat(localStorage.getItem('userLat')),
                       lng: parseFloat(localStorage.getItem('userLng'))
@@ -376,7 +385,17 @@ const BotChat = () => {
                   })
                 ) : (
                   <div className="text-center text-gray-500 text-sm py-8">
-                    Chat with the bot to get personalized recommendations
+                    {getBotTagProfile() && Object.keys(getBotTagProfile()).length > 0 ? (
+                      <div>
+                        <p>No services match your current preferences.</p>
+                        <p className="mt-2">Try asking the bot about different services!</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p>Start chatting with the bot to get personalized recommendations!</p>
+                        <p className="mt-2 text-xs">The bot will learn your preferences and suggest relevant services.</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

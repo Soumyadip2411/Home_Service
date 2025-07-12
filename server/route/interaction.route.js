@@ -12,6 +12,9 @@ interactionRouter.post("/bot-chat", auth, async (req, res) => {
   try {
     const { interactionType, tags, botTagProfile } = req.body;
     
+    console.log('Bot chat route - Request body:', req.body);
+    console.log('Bot chat route - User ID:', req.userId);
+    
     // Validate required fields
     if (!interactionType || interactionType !== 'bot_chat') {
       return res.status(400).json({
@@ -21,20 +24,14 @@ interactionRouter.post("/bot-chat", auth, async (req, res) => {
       });
     }
 
-    // Create a virtual interaction for bot chat
-    const virtualInteraction = {
-      user: req.userId,
-      service: null, // No specific service for bot chat
-      interactionType: 'bot_chat'
-    };
-
-    // Call the interaction controller with virtual serviceId
+    // Call the interaction controller directly with bot-chat serviceId
     req.params = { serviceId: 'bot-chat' };
     req.body = { interactionType: 'bot_chat', tags, botTagProfile };
     
     return await addInteraction(req, res);
     
   } catch (error) {
+    console.error('Bot chat route error:', error);
     return res.status(500).json({
       message: error.message || error,
       error: true,
