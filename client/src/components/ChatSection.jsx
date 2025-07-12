@@ -8,6 +8,24 @@ function getInitials(name) {
   return name.split(' ').map(n => n[0]).join('').toUpperCase();
 }
 
+function Avatar({ avatar, name, size = 'w-8 h-8', className = '' }) {
+  if (avatar) {
+    return (
+      <img
+        src={avatar}
+        alt={name}
+        className={`${size} rounded-full object-cover ${className}`}
+      />
+    );
+  }
+  
+  return (
+    <div className={`${size} rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm ${className}`}>
+      {getInitials(name)}
+    </div>
+  );
+}
+
 const suggestedPrompts = [
   'What services do you offer?',
   'How do I cancel a booking?',
@@ -24,6 +42,8 @@ const ChatSection = ({ bookingId, userId, userRole }) => {
   const [sending, setSending] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [chatPartnerName, setChatPartnerName] = useState('');
+  const [chatPartnerAvatar, setChatPartnerAvatar] = useState('');
+  const [currentUserAvatar, setCurrentUserAvatar] = useState('');
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
   const navigate = useNavigate();
@@ -41,34 +61,51 @@ const ChatSection = ({ bookingId, userId, userRole }) => {
   }, [bookingId]);
 
   useEffect(() => {
-    const fetchChatPartnerName = async () => {
+    const fetchChatPartnerDetails = async () => {
       try {
         let response;
         const endpoint = userRole === 'PROVIDER' 
-          ? `/api/bookings/customer-name/${bookingId}`
-          : `/api/bookings/provider-name/${bookingId}`;
+          ? `/api/bookings/customer-details/${bookingId}`
+          : `/api/bookings/provider-details/${bookingId}`;
         
-       
         response = await axios.get(endpoint);
         
-       
-        
-        if (response.data.success && response.data.data.name) {
-          setChatPartnerName(response.data.data.name);
+        if (response.data.success && response.data.data) {
+          setChatPartnerName(response.data.data.name || (userRole === 'PROVIDER' ? 'Customer' : 'Provider'));
+          setChatPartnerAvatar(response.data.data.avatar || '');
         } else {
-          console.error('No name found in response:', response.data);
+          console.error('No details found in response:', response.data);
           setChatPartnerName(userRole === 'PROVIDER' ? 'Customer' : 'Provider');
+          setChatPartnerAvatar('');
         }
       } catch (error) {
-        console.error('Error fetching chat partner name:', error);
+        console.error('Error fetching chat partner details:', error);
         setChatPartnerName(userRole === 'PROVIDER' ? 'Customer' : 'Provider');
+        setChatPartnerAvatar('');
       }
     };
 
     if (bookingId) {
-      fetchChatPartnerName();
+      fetchChatPartnerDetails();
     }
   }, [bookingId, userRole]);
+
+  useEffect(() => {
+    const fetchCurrentUserDetails = async () => {
+      try {
+        const response = await axios.get('/api/user/get-user-details');
+        
+        if (response.data.success && response.data.data) {
+          setCurrentUserAvatar(response.data.data.avatar || '');
+        }
+      } catch (error) {
+        console.error('Error fetching current user details:', error);
+        setCurrentUserAvatar('');
+      }
+    };
+
+    fetchCurrentUserDetails();
+  }, []);
 
   useEffect(() => {
     if (!chatRoom) return;
@@ -146,9 +183,7 @@ const ChatSection = ({ bookingId, userId, userRole }) => {
         {/* Header */}
         
         <div className="flex items-center gap-3 px-5 py-4 bg-white border-b">
-          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold text-lg">
-            {getInitials(chatPartnerName)}
-          </div>
+          <Avatar avatar={chatPartnerAvatar} name={chatPartnerName} size="w-11 h-11" />
           <div className="flex-1">
             <h2 className="font-semibold text-gray-900 text-base">
               Chat with {chatPartnerName || (userRole === 'PROVIDER' ? 'Customer' : 'Provider')}
@@ -184,9 +219,7 @@ const ChatSection = ({ bookingId, userId, userRole }) => {
               return (
                 <div key={msg._id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                   {!isMe && !isBot && (
-                    <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-700 font-bold mr-2">
-                      {getInitials(chatPartnerName)}
-                    </div>
+                    <Avatar avatar={chatPartnerAvatar} name={chatPartnerName} size="w-8 h-8" className="mr-2" />
                   )}
                   {isBot && (
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white font-bold mr-2 shadow-md">
@@ -212,9 +245,7 @@ const ChatSection = ({ bookingId, userId, userRole }) => {
                     </span>
                   </div>
                   {isMe && (
-                    <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold ml-2">
-                      {getInitials('You')}
-                    </div>
+                    <Avatar avatar={currentUserAvatar} name="You" size="w-8 h-8" className="ml-2" />
                   )}
                 </div>
               );

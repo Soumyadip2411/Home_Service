@@ -424,6 +424,76 @@ export const getProviderNameByBookingId = async (request, response) => {
   }
 };
 
+export const getCustomerDetailsByBookingId = async (request, response) => {
+  try {
+    const { bookingId } = request.params;
+    
+    const booking = await Booking.findById(bookingId)
+      .populate('customer', 'name email avatar');
+    
+    if (!booking) {
+      return response.status(404).json({
+        message: "Booking not found",
+        success: false,
+        error: true,
+      });
+    }
+
+    return response.json({
+      message: "Customer details fetched successfully",
+      data: {
+        name: booking.customer.name,
+        email: booking.customer.email,
+        avatar: booking.customer.avatar || ''
+      },
+      success: true,
+      error: false,
+    });
+  } catch (error) {
+    console.error("Error in getCustomerDetailsByBookingId:", error);
+    return response.status(500).json({
+      message: "Failed to fetch customer details",
+      error: true,
+      success: false,
+    });
+  }
+};
+
+export const getProviderDetailsByBookingId = async (request, response) => {
+  try {
+    const { bookingId } = request.params;
+    
+    const booking = await Booking.findById(bookingId)
+      .populate('provider', 'name email avatar');
+    
+    if (!booking) {
+      return response.status(404).json({
+        message: "Booking not found",
+        success: false,
+        error: true,
+      });
+    }
+
+    return response.json({
+      message: "Provider details fetched successfully",
+      data: {
+        name: booking.provider.name,
+        email: booking.provider.email,
+        avatar: booking.provider.avatar || ''
+      },
+      success: true,
+      error: false,
+    });
+  } catch (error) {
+    console.error("Error in getProviderDetailsByBookingId:", error);
+    return response.status(500).json({
+      message: "Failed to fetch provider details",
+      error: true,
+      success: false,
+    });
+  }
+};
+
 export const getBookingById = async (request, response) => {
   try {
     const userId = request.userId;
