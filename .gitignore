@@ -123,3 +123,6 @@ public/uploads/
 # Local configuration files
 config.local.js
 config.local.json 
+#virtual environment files
+venv_face_new
+venv_face

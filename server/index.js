@@ -20,6 +20,7 @@ import botRouter from "./route/bot.route.js";
 import botChatRouter from './route/botChat.route.js';
 import notificationRouter from './route/notification.route.js';
 import adminRouter from './route/admin.route.js';
+import faceEncodingRouter from "./route/faceEncoding.route.js";
 
 const app = express();
 
@@ -60,6 +61,7 @@ app.use("/api/chat/bot", botRouter);
 app.use('/api/chat/bot-chat', botChatRouter);
 app.use('/api/notifications', notificationRouter);
 app.use('/api/admin', adminRouter);
+app.use("/api/face", faceEncodingRouter);
 
 connectDB().then(() => {
   app.listen(PORT, () => {

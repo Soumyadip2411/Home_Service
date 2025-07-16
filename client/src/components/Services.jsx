@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { FiSearch, FiTag, FiDollarSign, FiMapPin, FiClock, FiStar, FiGrid, FiMap } from "react-icons/fi";
 import { useLocation } from "react-router-dom";
+import SearchByFaceModal from "./SearchByFaceModal";
 
 const Services = () => {
   const [services, setServices] = useState([]);
@@ -30,6 +31,11 @@ const Services = () => {
     provider: "",
     radius: "",
   });
+
+  const [showFaceModal, setShowFaceModal] = useState(false);
+  const [faceSearchResults, setFaceSearchResults] = useState(null); // null or array
+  const [faceSearchLoading, setFaceSearchLoading] = useState(false);
+  const [faceSearchError, setFaceSearchError] = useState("");
 
   const fetchAllServices = async (searchQuery = "") => {
     try {
@@ -150,6 +156,64 @@ const Services = () => {
     return matchesCategory && matchesRating && matchesPrice && matchesProvider && matchesDistance;
   });
 
+  // Handler for face search result
+  const handleFaceSearch = async (imageSrc, onProviderResult) => {
+    setFaceSearchLoading(true);
+    setFaceSearchError("");
+    setFaceSearchResults(null);
+    try {
+      // Convert base64 to blob
+      const res = await fetch(imageSrc);
+      const blob = await res.blob();
+      const formData = new FormData();
+      formData.append("file", blob, "frame.jpg");
+      const response = await Axios.post("/api/face/search-provider", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      if (response.data.success && response.data.services && response.data.provider) {
+        setFaceSearchResults(response.data.services);
+        if (onProviderResult) onProviderResult(response.data.provider.name);
+      } else {
+        setFaceSearchError(response.data.msg || "No provider found.");
+        if (onProviderResult) onProviderResult(null);
+      }
+    } catch (err) {
+      setFaceSearchError("No provider found or error occurred.");
+      if (onProviderResult) onProviderResult(null);
+    } finally {
+      setFaceSearchLoading(false);
+    }
+  };
+
+  // When provider name is found, set it in the search box
+  const handleProviderName = (providerName) => {
+    if (providerName) {
+      // Normalize: trim and collapse multiple spaces
+      const normalized = providerName.trim().replace(/\s+/g, ' ');
+      setFilters(prev => ({ ...prev, search: normalized }));
+
+      // Fallback: after a short delay, if no results, try first or last name
+      setTimeout(() => {
+        if (faceSearchResults && faceSearchResults.length === 0) {
+          const parts = normalized.split(' ');
+          if (parts.length > 1) {
+            // Try first name
+            setFilters(prev => ({ ...prev, search: parts[0] }));
+            // Or try last name after another delay
+            setTimeout(() => {
+              if (faceSearchResults && faceSearchResults.length === 0) {
+                setFilters(prev => ({ ...prev, search: parts[parts.length - 1] }));
+              }
+            }, 800);
+          }
+        }
+      }, 1200);
+    }
+    setShowFaceModal(false);
+    setFaceSearchResults(null);
+    setFaceSearchError("");
+  };
+
   // Handle map view toggle with error handling
   const handleViewModeChange = (mode) => {
     if (mode === 'map') {
@@ -227,6 +291,20 @@ const Services = () => {
         )}
       </AnimatePresence>
 
+      {/* Search by Face Modal */}
+      <SearchByFaceModal
+        isOpen={showFaceModal}
+        onClose={() => {
+          setShowFaceModal(false);
+          setFaceSearchResults(null);
+          setFaceSearchError("");
+        }}
+        onCapture={handleFaceSearch}
+        loading={faceSearchLoading}
+        error={faceSearchError}
+        onProviderName={handleProviderName}
+      />
+
       {/* Filter Section */}
       <motion.div
         className="bg-white/40 backdrop-blur-md p-6 rounded-xl shadow-xl mb-8 border border-white/20"
@@ -234,6 +312,16 @@ const Services = () => {
         animate={{ opacity: 1, y: 0 }}
       >
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {/* Search by Face Button */}
+          <div className="col-span-1 flex items-end">
+            <button
+              className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-4 py-2 rounded-lg shadow hover:from-cyan-600 hover:to-blue-600 transition-all font-semibold"
+              onClick={() => setShowFaceModal(true)}
+            >
+              <span role="img" aria-label="face">🔍</span> Search by Face
+            </button>
+          </div>
+
           <div className="relative">
             <FiSearch className="absolute left-3 top-[38px] text-gray-500" />
             <label className="block text-sm font-medium text-gray-700 mb-2">Search Services</label>
@@ -350,6 +438,202 @@ const Services = () => {
               </div>
             ) : (
               <ServiceMapView services={filteredServices} />
+            )}
+          </motion.div>
+        ) : faceSearchResults ? (
+          <motion.div
+            key="face-search-results"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {faceSearchResults.length === 0 ? (
+              <motion.div
+                className="col-span-full text-center py-12 text-gray-500"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                No provider found
+              </motion.div>
+            ) : (
+              faceSearchResults.map((service, index) => {
+                // Calculate distance for each service
+                const userLat = parseFloat(localStorage.getItem("userLat"));
+                const userLng = parseFloat(localStorage.getItem("userLng"));
+                let distanceText = "Distance unavailable";
+                
+                if (userLat && userLng && service.location?.coordinates) {
+                  const distance = calculateDistance(
+                    userLat,
+                    userLng,
+                    service.location.coordinates[1],
+                    service.location.coordinates[0]
+                  );
+                  distanceText = formatDistance(distance);
+                }
+
+                return (
+                  <motion.div
+                    key={service._id}
+                    className="group relative backdrop-blur-sm bg-white/10 dark:bg-gray-800/10 rounded-2xl overflow-hidden border border-white/20 dark:border-gray-700/20 hover:bg-white/20 dark:hover:bg-gray-800/20 transition-all duration-500 cursor-pointer"
+                    onClick={() => navigate(`/service/${service._id}`)}
+                    variants={{
+                      hidden: { y: 20, opacity: 0 },
+                      visible: {
+                        y: 0,
+                        opacity: 1,
+                        transition: { 
+                          type: "spring", 
+                          stiffness: 100, 
+                          damping: 12,
+                          delay: index * 0.1 
+                        }
+                      }
+                    }}
+                    whileHover={{ 
+                      y: -8, 
+                      scale: 1.02,
+                      transition: { type: "spring", stiffness: 300, damping: 20 }
+                    }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {/* Popular Badge */}
+                    {service.avgRating && service.avgRating >= 4.5 && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.1 + 0.2 }}
+                        className="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg z-10"
+                      >
+                        ⭐ Popular
+                      </motion.div>
+                    )}
+
+                    {/* New Badge */}
+                    {!service.avgRating && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.1 + 0.2 }}
+                        className="absolute top-4 right-4 bg-gradient-to-r from-blue-400 to-purple-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg z-10"
+                      >
+                        🆕 New
+                      </motion.div>
+                    )}
+
+                    {/* Hover Overlay */}
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      initial={false}
+                    />
+
+                    <div className="p-6 relative z-10">
+                      <div className="flex items-center gap-4 mb-4">
+                        <motion.div
+                          whileHover={{ scale: 1.1, rotate: 5 }}
+                          className="relative"
+                        >
+                          {service.provider?.avatar ? (
+                            <img
+                              src={service.provider.avatar}
+                              alt={service.provider?.name}
+                              className="w-12 h-12 rounded-full object-cover ring-2 ring-green-500/30 group-hover:ring-green-500 transition-all duration-300"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-bold ring-2 ring-green-500/30 group-hover:ring-green-500 transition-all duration-300">
+                              {service.provider?.name
+                                ? service.provider.name
+                                    .split(' ')
+                                    .map(word => word.charAt(0))
+                                    .join('')
+                                    .toUpperCase()
+                                    .slice(0, 2)
+                                : 'SP'}
+                            </div>
+                          )}
+                        </motion.div>
+                        <div>
+                          <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
+                            {service.title}
+                          </h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors duration-300">
+                            by {service.provider?.name}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* Enhanced Distance Display */}
+                      <motion.div 
+                        className="flex items-center gap-2 mb-4 text-gray-600 dark:text-gray-400"
+                        whileHover={{ x: 5 }}
+                        transition={{ type: "spring", stiffness: 300 }}
+                      >
+                        <FiMapPin className="text-green-500 group-hover:text-green-600 transition-colors duration-300" />
+                        <span className="text-sm font-medium">{distanceText}</span>
+                      </motion.div>
+                      
+                      <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 group-hover:line-clamp-none transition-all duration-300 group-hover:text-gray-700 dark:group-hover:text-gray-300">
+                        {service.description}
+                      </p>
+                      
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-4">
+                          <motion.span 
+                            className="text-2xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent"
+                            whileHover={{ scale: 1.05 }}
+                          >
+                            ₹{service.price}
+                          </motion.span>
+                          <motion.div 
+                            className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-full group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors duration-300"
+                            whileHover={{ scale: 1.05 }}
+                          >
+                            <FiClock className="w-4 h-4 text-blue-500" />
+                            <span className="text-blue-700 dark:text-blue-300 font-medium">{service.duration} hr{service.duration !== 1 ? 's' : ''}</span>
+                          </motion.div>
+                        </div>
+                        <motion.div 
+                          className="flex items-center gap-1 bg-yellow-100 dark:bg-yellow-900/30 px-3 py-1 rounded-full group-hover:bg-yellow-200 dark:group-hover:bg-yellow-900/50 transition-colors duration-300"
+                          whileHover={{ scale: 1.05 }}
+                        >
+                          <span className="text-yellow-500">★</span>
+                          <span className="text-yellow-700 dark:text-yellow-300 font-medium">{service.avgRating?.toFixed(1) || "New"}</span>
+                        </motion.div>
+                      </div>
+
+                      <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+                        <motion.span 
+                          className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-600 font-medium group-hover:bg-gray-200 transition-colors duration-300"
+                          whileHover={{ scale: 1.05 }}
+                        >
+                          {service.category?.name}
+                        </motion.span>
+                        <motion.button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/book-service/${service._id}`);
+                          }}
+                          className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg hover:from-green-700 hover:to-green-600 transition-all duration-300 shadow-md hover:shadow-lg font-medium"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          Book Now
+                        </motion.button>
+                      </div>
+                    </div>
+
+                    {/* Ripple Effect on Click */}
+                    <motion.div
+                      className="absolute inset-0 bg-white/20 dark:bg-gray-600/20 rounded-2xl"
+                      initial={{ scale: 0, opacity: 0 }}
+                      whileTap={{ scale: 2, opacity: 0 }}
+                      transition={{ duration: 0.6 }}
+                    />
+                  </motion.div>
+                );
+              })
             )}
           </motion.div>
         ) : (

@@ -9,10 +9,12 @@ import fetchUserDetails from "../utils/fetchUserDetails";
 import { useDispatch } from "react-redux";
 import { setUserDetails } from "../store/userSlice";
 import { motion } from "framer-motion";
+import FaceLoginModal from "../components/FaceLoginModal";
 
 const Login = () => {
   const [data, setData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
+  const [showFaceModal, setShowFaceModal] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -97,6 +99,14 @@ const Login = () => {
     } catch (err) {
       AxiosToastError(err);
     }
+  };
+
+  const handleFaceLoginSuccess = async (user_id) => {
+    // Optionally fetch tokens/user details here, or redirect
+    toast.success("Logged in with face recognition!");
+    // You may want to fetch tokens/user details from backend if needed
+    // For now, just redirect to home
+    navigate("/");
   };
 
   useEffect(() => {
@@ -198,7 +208,19 @@ const Login = () => {
           >
             Login
           </motion.button>
-        </form>  
+        </form>
+        <button
+          className="w-full mt-4 py-3 rounded-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-all"
+          onClick={() => setShowFaceModal(true)}
+          type="button"
+        >
+          Login with Face
+        </button>
+        <FaceLoginModal
+          isOpen={showFaceModal}
+          onClose={() => setShowFaceModal(false)}
+          onLoginSuccess={handleFaceLoginSuccess}
+        />
 
         <motion.p
           className="text-center mt-6 text-sm"

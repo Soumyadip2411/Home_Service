@@ -52,6 +52,10 @@ const userSchema = new mongoose.Schema(
       type: Object,
       default: {}
     },
+    faceRegistered: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

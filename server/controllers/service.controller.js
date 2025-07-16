@@ -93,25 +93,22 @@ export const getAllServices = async (req, res) => {
       },
     ];
 
-    // Enhanced search filter if search query is provided
+    // Move $match after all $lookup and $unwind
     if (search && search.trim().length > 0) {
       const searchTerm = search.trim();
       const searchRegex = new RegExp(searchTerm, 'i');
       const prefixRegex = new RegExp(`^${searchTerm}`, 'i'); // For prefix matching
       
-      pipeline.unshift({
+      pipeline.push({
         $match: {
           $or: [
             // Title and description matches
             { title: searchRegex },
             { description: searchRegex },
-            
             // Category name matches
             { "category.name": searchRegex },
-            
             // Provider name matches (including prefix)
             { "provider.name": searchRegex },
-            
             // Tag matches (exact and prefix)
             { 
               tags: { 
@@ -121,7 +118,6 @@ export const getAllServices = async (req, res) => {
                 } 
               } 
             },
-            
             // Tag prefix matches
             { 
               tags: { 
@@ -131,10 +127,8 @@ export const getAllServices = async (req, res) => {
                 } 
               } 
             },
-            
             // Provider name prefix matches
             { "provider.name": prefixRegex },
-            
             // Category name prefix matches
             { "category.name": prefixRegex }
           ]

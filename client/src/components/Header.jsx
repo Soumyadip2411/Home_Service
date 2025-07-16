@@ -9,6 +9,7 @@ import SummaryApi from '../common/SummaryApi';
 import { FiMapPin, FiChevronDown, FiBell, FiCamera, FiUser, FiSettings, FiShield } from 'react-icons/fi';
 import { FaRobot } from 'react-icons/fa';
 import AvatarUpload from './AvatarUpload';
+import FaceRegisterModal from "./FaceRegisterModal";
 
 const Header = () => {
   const location = useLocation();
@@ -34,6 +35,7 @@ const Header = () => {
   const profileMenuRef = useRef(null);
   const locationMenuRef = useRef(null);
   const notifPanelRef = useRef(null);
+  const [showFaceRegister, setShowFaceRegister] = useState(false);
 
   // Helper function to get user initials
   const getUserInitials = (name) => {
@@ -339,6 +341,31 @@ const Header = () => {
                       </button>
                     )}
                     
+                    {isLoggedIn && user && !user.faceRegistered && (
+                      <button
+                        onClick={() => {
+                          setShowFaceRegister(true);
+                          setShowProfileMenu(false);
+                        }}
+                        className="w-full px-3 py-2 text-left text-sm text-green-600 hover:bg-green-50 rounded flex items-center gap-2"
+                      >
+                        <FiShield className="text-sm" />
+                        Add Biometry
+                      </button>
+                    )}
+                    {isLoggedIn && user && !!user.faceRegistered && (
+                      <button
+                        onClick={() => {
+                          setShowFaceRegister(true);
+                          setShowProfileMenu(false);
+                        }}
+                        className="w-full px-3 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 rounded flex items-center gap-2"
+                      >
+                        <FiShield className="text-sm" />
+                        Update Biometry
+                      </button>
+                    )}
+                    
                     <div className="w-full border-t border-gray-200 pt-2 mt-2">
                       <button
                         onClick={() => {
@@ -545,6 +572,16 @@ const Header = () => {
             userName={user?.name}
             onAvatarUpdate={handleAvatarUpdate}
             onClose={() => setShowAvatarUpload(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Face Register Modal */}
+      <AnimatePresence>
+        {showFaceRegister && (
+          <FaceRegisterModal
+            isOpen={showFaceRegister}
+            onClose={() => setShowFaceRegister(false)}
           />
         )}
       </AnimatePresence>
