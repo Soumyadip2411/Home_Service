@@ -15,13 +15,25 @@ const FaceLoginModal = ({ isOpen, onClose }) => {
   const [faceDetected, setFaceDetected] = useState(null); // null, true, false
   const [loading, setLoading] = useState(false);
   const [showTick, setShowTick] = useState(false); // Only show tick once
+  const [sessionId, setSessionId] = useState(null);
   const intervalRef = useRef();
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  // Start session when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      Axios.post("/api/face/start-session")
+        .then(res => setSessionId(res.data.sessionId))
+        .catch(() => setFeedback("Failed to start face session."));
+    } else {
+      setSessionId(null);
+    }
+  }, [isOpen]);
+
   // Stable capture function
   const captureAndVerify = async () => {
-    if (!webcamRef.current) return;
+    if (!webcamRef.current || !sessionId) return;
     const imageSrc = webcamRef.current.getScreenshot();
     if (!imageSrc) return;
     setLoading(true);
@@ -31,8 +43,9 @@ const FaceLoginModal = ({ isOpen, onClose }) => {
     const blob = await res.blob();
     const formData = new FormData();
     formData.append("file", blob, "frame.jpg");
+    formData.append("sessionId", sessionId);
     try {
-      const response = await Axios.post("/api/face/verify", formData, {
+      const response = await Axios.post("/api/face/verify-frame", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setLoading(false);
@@ -43,10 +56,19 @@ const FaceLoginModal = ({ isOpen, onClose }) => {
         localStorage.setItem("accesstoken", response.data.accesstoken);
         localStorage.setItem("refreshToken", response.data.refreshToken);
         dispatch(setUserDetails(response.data.user));
-        setTimeout(() => {
+        setTimeout(async () => {
           clearInterval(intervalRef.current);
           setIsVerifying(false);
           setShowTick(false);
+          if (sessionId) {
+            try {
+              const formData = new FormData();
+              formData.append("sessionId", sessionId);
+              await Axios.post("/api/face/end-session", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+              });
+            } catch (e) {}
+          }
           onClose();
           navigate("/");
         }, 1400);
@@ -59,6 +81,25 @@ const FaceLoginModal = ({ isOpen, onClose }) => {
       setFaceDetected(false);
       setFeedback("No face detected. Align your face in the scanner.");
     }
+  };
+
+  // End session and close modal
+  const handleClose = async () => {
+    setIsVerifying(false);
+    clearInterval(intervalRef.current);
+    setShowTick(false);
+    if (sessionId) {
+      try {
+        const formData = new FormData();
+        formData.append("sessionId", sessionId);
+        await Axios.post("/api/face/end-session", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } catch (e) {
+        // Optionally log or toast error
+      }
+    }
+    onClose();
   };
 
   useEffect(() => {
@@ -75,7 +116,7 @@ const FaceLoginModal = ({ isOpen, onClose }) => {
             clearInterval(intervalRef.current);
             setIsVerifying(false);
             setFeedback("Face not recognized. Try again or use password.");
-            onClose();
+            handleClose();
             return 0;
           }
           return prev - 1;
@@ -85,7 +126,7 @@ const FaceLoginModal = ({ isOpen, onClose }) => {
       return () => clearInterval(intervalRef.current);
     }
     // eslint-disable-next-line
-  }, [isOpen, onClose]);
+  }, [isOpen, sessionId]);
 
   if (!isOpen) return null;
 
@@ -197,12 +238,7 @@ const FaceLoginModal = ({ isOpen, onClose }) => {
         </div>
         <button
           className="mt-2 px-6 py-2 rounded-lg bg-gradient-to-r from-pink-500 to-cyan-500 text-white font-semibold shadow hover:from-pink-600 hover:to-cyan-600 transition-all tracking-wider"
-          onClick={() => {
-            setIsVerifying(false);
-            clearInterval(intervalRef.current);
-            setShowTick(false);
-            onClose();
-          }}
+          onClick={handleClose}
         >
           Cancel
         </button>
