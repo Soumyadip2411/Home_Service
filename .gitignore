@@ -126,3 +126,8 @@ config.local.json
 #virtual environment files
 venv
 venv_face
+# Python cache files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
