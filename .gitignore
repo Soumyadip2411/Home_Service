@@ -124,5 +124,5 @@ public/uploads/
 config.local.js
 config.local.json 
 #virtual environment files
-venv_face_new
+venv
 venv_face
