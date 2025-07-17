@@ -69,15 +69,15 @@ const ResetPassword = () => {
       <div className="absolute inset-0 bg-black/70 z-0" />
 
       <motion.div
-        className="relative z-10 bg-neutral-900 w-full max-w-lg p-8 rounded-2xl shadow-2xl border border-neutral-800 text-white backdrop-blur-md bg-opacity-90"
+        className="relative z-10 bg-neutral-900 w-full max-w-lg mx-4 sm:mx-auto p-6 sm:p-8 rounded-xl sm:rounded-2xl shadow-2xl border border-neutral-800 text-white backdrop-blur-md bg-opacity-90"
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <h2 className="text-2xl font-semibold text-center mb-2 text-green-400">
+        <h2 className="text-xl sm:text-2xl font-semibold text-center mb-2 text-green-400">
           Reset Your Password
         </h2>
-        <p className="text-sm text-center text-neutral-400 mb-6">
+        <p className="text-xs sm:text-sm text-center text-neutral-400 mb-4 sm:mb-6">
           Create a strong and memorable password
         </p>
 
@@ -95,7 +95,7 @@ const ResetPassword = () => {
                 value={data.newPassword}
                 onChange={handleChange}
                 placeholder="Enter new password"
-                className="w-full p-3 rounded-lg bg-neutral-800 text-white border border-neutral-700 focus:border-green-500 outline-none transition transform hover:scale-[1.01] focus:scale-[1.01]"
+                className="w-full p-2.5 sm:p-3 text-sm sm:text-base rounded-lg bg-neutral-800 text-white border border-neutral-700 focus:border-green-500 outline-none transition transform hover:scale-[1.02] focus:scale-[1.02]"
               />
               <div
                 onClick={() => setShowPassword(prev => !prev)}

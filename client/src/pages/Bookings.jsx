@@ -57,29 +57,29 @@ const Bookings = () => {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-6">Your Bookings</h2>
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center sm:text-left">Your Bookings</h2>
       {bookings.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">No bookings found</p>
+        <div className="text-center py-8 sm:py-12">
+          <p className="text-gray-500 text-base sm:text-lg mb-4">No bookings found</p>
           <button
             onClick={() => navigate('/services')}
-            className="mt-4 px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+            className="mt-2 sm:mt-4 px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors w-full sm:w-auto"
           >
             Browse Services
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {bookings.map((booking) => (
           <motion.div
             key={booking._id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 relative"
+            className="bg-white/10 backdrop-blur-md rounded-xl p-4 sm:p-6 border border-white/20 relative flex flex-col"
           >
-            <h3 className="text-xl font-semibold mb-4">{booking.service?.title || "Service not found"}</h3>
-            <div className="space-y-2 mb-4">
+            <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">{booking.service?.title || "Service not found"}</h3>
+            <div className="space-y-2 sm:space-y-3 mb-4 flex-grow">
               <p className="flex items-center">
                 <FiClock className="mr-2" />
                 {booking.date && booking.time 
@@ -123,7 +123,7 @@ const Bookings = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handleReviewClick(booking)}
-                className="w-full mt-4 flex items-center justify-center gap-2 bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors"
+                className="w-full mt-3 sm:mt-4 flex items-center justify-center gap-2 bg-green-500 text-white py-2.5 sm:py-3 px-4 rounded-lg hover:bg-green-600 transition-colors text-sm sm:text-base"
               >
                 <FiStar className="text-lg" />
                 Write Review
@@ -132,7 +132,7 @@ const Bookings = () => {
             {/* Chat Button for confirmed or completed bookings */}
             {(booking.status === 'confirmed' || booking.status === 'completed') && (
               <button
-                className="mt-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors w-full"
+                className="mt-2 sm:mt-3 px-4 py-2.5 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-full text-sm sm:text-base"
                 onClick={() => navigate(`/chat/${booking._id}`)}
               >
                 {userRole === 'PROVIDER' ? 'Chat with your client' : 'Chat with your provider'}

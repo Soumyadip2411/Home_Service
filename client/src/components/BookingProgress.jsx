@@ -11,17 +11,17 @@ const BookingProgress = ({ currentStep, totalSteps }) => {
   ];
 
   return (
-    <div className="mb-8">
-      <div className="flex items-center justify-between">
+    <div className="mb-4 sm:mb-8 px-2 sm:px-4 overflow-x-auto">
+      <div className="flex flex-row items-center justify-between gap-1 sm:gap-2 min-w-max pb-2">
         {steps.map((step, index) => {
           const isCompleted = currentStep > step.id;
           const isCurrent = currentStep === step.id;
           const Icon = step.icon;
 
           return (
-            <div key={step.id} className="flex items-center">
+            <div key={step.id} className="flex flex-col sm:flex-row items-center w-full sm:w-auto">
               <motion.div
-                className={`relative flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 ${
+                className={`relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 transition-all duration-300 ${
                   isCompleted
                     ? 'bg-green-500 border-green-500 text-white'
                     : isCurrent
@@ -47,9 +47,9 @@ const BookingProgress = ({ currentStep, totalSteps }) => {
               </motion.div>
 
               {/* Step Title */}
-              <div className="ml-3">
+              <div className="ml-2 sm:ml-3">
                 <motion.p
-                  className={`text-sm font-medium transition-colors duration-300 ${
+                  className={`text-xs sm:text-sm font-medium transition-colors duration-300 ${
                     isCompleted
                       ? 'text-green-600 dark:text-green-400'
                       : isCurrent
@@ -67,7 +67,7 @@ const BookingProgress = ({ currentStep, totalSteps }) => {
               {/* Connector Line */}
               {index < steps.length - 1 && (
                 <motion.div
-                  className={`flex-1 h-0.5 mx-4 transition-all duration-300 ${
+                  className={`hidden sm:flex w-8 sm:w-12 h-0.5 mx-2 sm:mx-4 transition-all duration-300 ${
                     isCompleted
                       ? 'bg-green-500'
                       : 'bg-gray-300 dark:bg-gray-600'
@@ -84,7 +84,7 @@ const BookingProgress = ({ currentStep, totalSteps }) => {
 
       {/* Progress Bar */}
       <motion.div
-        className="mt-6 bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden"
+        className="mt-4 sm:mt-6 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 sm:h-2 overflow-hidden"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
@@ -99,7 +99,7 @@ const BookingProgress = ({ currentStep, totalSteps }) => {
 
       {/* Step Counter */}
       <motion.div
-        className="mt-4 text-center"
+        className="mt-3 sm:mt-4 text-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.7 }}
@@ -112,4 +112,4 @@ const BookingProgress = ({ currentStep, totalSteps }) => {
   );
 };
 
-export default BookingProgress; 
+export default BookingProgress;

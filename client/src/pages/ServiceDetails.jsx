@@ -91,26 +91,26 @@ const ServiceDetails = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white/20 backdrop-blur-md rounded-xl shadow-xl overflow-hidden border border-white/20"
       >
         <div className="p-6">
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 mb-6">
             <img
               src={service.provider?.avatar || `https://ui-avatars.com/api/?name=${service.provider?.name}`}
               alt={service.provider?.name}
-              className="w-16 h-16 rounded-full object-cover ring-2 ring-green-500/30"
+              className="w-20 h-20 sm:w-16 sm:h-16 rounded-full object-cover ring-2 ring-green-500/30"
             />
             <div>
-              <h1 className="text-2xl font-bold text-white">{service.title}</h1>
-              <p className="text-white/80">Provided by {service.provider?.name}</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-white">{service.title}</h1>
+              <p className="text-sm sm:text-base text-white/80">Provided by {service.provider?.name}</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-white/80">
                 <FiClock />

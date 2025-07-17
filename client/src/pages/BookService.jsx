@@ -339,9 +339,9 @@ const BookService = () => {
             <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Select Date & Time</h3>
             
             {/* Calendar Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
               {/* Calendar */}
-              <div className="bg-white/50 rounded-lg p-6">
+              <div className="bg-white/50 rounded-lg p-3 sm:p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h4 className="text-lg font-semibold text-gray-800">Select Date</h4>
                   <div className="flex items-center gap-2">
@@ -414,7 +414,7 @@ const BookService = () => {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 max-h-[calc(100vh-24rem)] sm:max-h-96 overflow-y-auto">
                     {availableSlots.length === 0 ? (
                       <div className="col-span-2 text-center py-8 text-gray-500">
                         <FiClock className="w-12 h-12 mx-auto mb-3 text-gray-300" />
@@ -476,7 +476,7 @@ const BookService = () => {
             className="space-y-6"
           >
             <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Additional Details</h3>
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Special Instructions
@@ -577,7 +577,7 @@ const BookService = () => {
             <h3 className="text-xl font-semibold text-white mb-4">Step 3: Review & Confirm</h3>
             
             {/* Review Summary */}
-            <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+            <div className="bg-white/10 backdrop-blur-md rounded-lg sm:rounded-xl p-4 sm:p-6 border border-white/20">
               <h4 className="text-lg font-semibold text-white mb-4">Booking Summary</h4>
               
               <div className="space-y-3 text-white/90">
@@ -680,7 +680,7 @@ const BookService = () => {
 
   return (
     <motion.div
-      className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 relative"
+      className="min-h-screen py-6 sm:py-12 px-2 sm:px-6 lg:px-8 relative"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -694,7 +694,7 @@ const BookService = () => {
       
       <div className="max-w-4xl mx-auto relative z-10">
         <motion.div
-          className="bg-white/20 dark:bg-gray-800/20 backdrop-blur-sm rounded-2xl p-8 shadow-xl"
+          className="bg-white/20 dark:bg-gray-800/20 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-8 shadow-xl"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -705,15 +705,15 @@ const BookService = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
-              className="flex items-center gap-4 mb-4"
+              className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-4 mb-4"
             >
               <img
                 src={service?.provider?.avatar || `https://ui-avatars.com/api/?name=${service?.provider?.name}`}
                 alt={service?.provider?.name}
-                className="w-16 h-16 rounded-full object-cover ring-4 ring-green-500/30"
+                className="w-20 h-20 sm:w-16 sm:h-16 rounded-full object-cover ring-4 ring-green-500/30"
               />
               <div>
-                <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">{service?.title}</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">{service?.title}</h1>
                 <p className="text-gray-600 dark:text-gray-400">by {service?.provider?.name}</p>
               </div>
             </motion.div>
@@ -722,7 +722,7 @@ const BookService = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400"
+              className="flex flex-wrap justify-center sm:justify-start items-center gap-4 sm:gap-6 text-sm text-gray-600 dark:text-gray-400"
             >
               <div className="flex items-center gap-2">
                 <span className="text-yellow-500">★</span>

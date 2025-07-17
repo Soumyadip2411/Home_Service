@@ -252,8 +252,8 @@ const BotChat = () => {
 
   return (
     <>
-      <div className="fixed inset-0 bg-gradient-to-b from-white to-gray-50 flex flex-col items-center justify-center">
-        <div className="w-full max-w-4xl flex flex-col h-full border rounded-xl shadow-md overflow-hidden bg-white">
+      <div className="fixed inset-0 bg-gradient-to-b from-white to-gray-50 flex flex-col items-center justify-center p-2 sm:p-4">
+        <div className="w-full max-w-4xl flex flex-col h-full border rounded-lg sm:rounded-xl shadow-md overflow-hidden bg-white">
           {/* Header */}
           <div className="flex items-center gap-3 px-5 py-4 bg-yellow-400 border-b sticky top-0 z-10">
             <FaRobot className="text-2xl text-black" />
@@ -267,10 +267,10 @@ const BotChat = () => {
           </div>
           
           {/* Main Content Area */}
-          <div className="flex-1 flex overflow-hidden">
+          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
             {/* Chat Area */}
-            <div className="flex-1 flex flex-col">
-              <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scroll-smooth scrollbar-thin scrollbar-thumb-yellow-300">
+            <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-3 sm:py-4 space-y-2 sm:space-y-3 scroll-smooth scrollbar-thin scrollbar-thumb-yellow-300">
                 {messages.map((msg, idx) => (
                   <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                     {msg.sender === 'bot' && (
@@ -299,11 +299,11 @@ const BotChat = () => {
               </div>
               
               {/* Input Area */}
-              <form onSubmit={handleSend} className="flex items-center gap-2 px-4 py-4 bg-white border-t">
+              <form onSubmit={handleSend} className="flex items-center gap-2 px-3 sm:px-4 py-3 sm:py-4 bg-white border-t">
                 <input
                   type="text"
                   placeholder={loading ? 'Bot is typing...' : 'Type your question...'}
-                  className="flex-1 rounded-full px-4 py-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 disabled:opacity-50"
+                  className="flex-1 rounded-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 disabled:opacity-50"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   disabled={loading}
@@ -311,14 +311,14 @@ const BotChat = () => {
                 />
                 <button
                   type="submit"
-                  className="bg-yellow-400 text-black px-6 py-3 rounded-full font-medium disabled:opacity-40 transition"
+                  className="bg-yellow-400 text-black px-4 sm:px-6 py-2.5 sm:py-3 rounded-full text-sm sm:text-base font-medium disabled:opacity-40 transition hover:bg-yellow-500"
                   disabled={loading || !input.trim()}
                 >{loading ? '...' : 'Send'}</button>
               </form>
             </div>
             
             {/* Recommendations Sidebar */}
-            <div className="w-80 border-l bg-gray-50 flex flex-col">
+            <div className="lg:w-80 border-t lg:border-t-0 lg:border-l bg-gray-50 flex flex-col">
               <div className="p-4 border-b bg-white">
                 <h3 className="text-lg font-bold text-green-700">Recommended Services</h3>
                 {recLoading && (
@@ -326,7 +326,7 @@ const BotChat = () => {
                 )}
               </div>
               
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div className="lg:flex-1 overflow-y-auto p-4 space-y-4 max-h-[300px] lg:max-h-none">
                 {sortedRecommendations.length > 0 ? (
                   sortedRecommendations.slice(0, 3).map((service, idx) => {
                     const coords = {
@@ -406,4 +406,4 @@ const BotChat = () => {
   );
 };
 
-export default BotChat; 
+export default BotChat;

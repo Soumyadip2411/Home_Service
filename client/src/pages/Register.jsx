@@ -75,15 +75,15 @@ const Register = () => {
       <div className="absolute inset-0 bg-black/70 z-0" />
 
       <motion.div
-        className="relative z-10 bg-neutral-900 w-full max-w-sm p-6 rounded-xl shadow-xl border border-neutral-800 backdrop-blur-md bg-opacity-90 max-h-[90vh] overflow-y-auto"
+        className="relative z-10 bg-neutral-900 w-full max-w-sm mx-4 sm:mx-auto p-4 sm:p-6 rounded-lg sm:rounded-xl shadow-xl border border-neutral-800 backdrop-blur-md bg-opacity-90 max-h-[90vh] overflow-y-auto"
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h2 className="text-2xl font-semibold mb-3 text-center text-green-400">
+        <h2 className="text-xl sm:text-2xl font-semibold mb-2 sm:mb-3 text-center text-green-400">
           Welcome to HomeService
         </h2>
-        <p className="text-xs text-center text-neutral-400 mb-5">
+        <p className="text-xs sm:text-sm text-center text-neutral-400 mb-4 sm:mb-5">
           Sign up to access trusted home services
         </p>
 
@@ -116,7 +116,7 @@ const Register = () => {
                       ? "Re-enter password"
                       : `Enter your ${field}`
                   }
-                  className="bg-neutral-800 text-white text-sm p-3 rounded-md border border-neutral-700 focus:border-green-500 outline-none transition-all duration-300 transform hover:scale-105 focus:scale-105"
+                  className="w-full bg-neutral-800 text-white text-sm p-2.5 sm:p-3 rounded-md border border-neutral-700 focus:border-green-500 outline-none transition-all duration-300 transform hover:scale-[1.02] focus:scale-[1.02]"
                 />
               </motion.div>
             )

@@ -129,12 +129,12 @@ const Login = () => {
       transition={{ duration: 0.5 }}
     >
       <motion.div
-        className="bg-black bg-opacity-75 w-full max-w-md p-8 rounded-xl shadow-lg text-white"
+        className="bg-black bg-opacity-75 w-full max-w-md mx-4 sm:mx-auto p-6 sm:p-8 rounded-lg sm:rounded-xl shadow-lg text-white"
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <h2 className="text-3xl font-bold mb-6 text-center text-green-400">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center text-green-400">
           Login to HomeService
         </h2>
 
@@ -155,7 +155,7 @@ const Login = () => {
               value={data.email}
               onChange={handleChange}
               placeholder="Enter your email"
-              className="bg-neutral-800 text-white p-3 rounded-lg border border-neutral-700 focus:border-green-500 outline-none transition-all duration-300 transform hover:scale-105 focus:scale-105"
+              className="w-full bg-neutral-800 text-white p-2.5 sm:p-3 text-sm sm:text-base rounded-lg border border-neutral-700 focus:border-green-500 outline-none transition-all duration-300 transform hover:scale-[1.02] focus:scale-[1.02]"
             />
           </motion.div>
 

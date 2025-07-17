@@ -73,20 +73,20 @@ const OtpVerification = () => {
       <div className="absolute inset-0 bg-black/70 z-0" />
 
       <motion.div
-        className="relative z-10 bg-neutral-900 text-white w-full max-w-md rounded-2xl p-8 border border-neutral-800 shadow-2xl backdrop-blur-md bg-opacity-90"
+        className="relative z-10 bg-neutral-900 text-white w-full max-w-md mx-4 sm:mx-auto rounded-xl sm:rounded-2xl p-6 sm:p-8 border border-neutral-800 shadow-2xl backdrop-blur-md bg-opacity-90"
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <h2 className="text-2xl font-bold text-center text-green-400 mb-1">OTP Verification</h2>
-        <p className="text-sm text-center text-neutral-400 mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-center text-green-400 mb-1">OTP Verification</h2>
+        <p className="text-xs sm:text-sm text-center text-neutral-400 mb-4 sm:mb-6">
           Enter the 6-digit code sent to your email
         </p>
 
         <form onSubmit={handleSubmit} className="grid gap-6">
           <div>
             <label className="block text-sm font-medium text-neutral-300 mb-2">Enter OTP:</label>
-            <div className="flex justify-between gap-2">
+            <div className="flex justify-between gap-1.5 sm:gap-2">
               {data.map((el, index) => (
                 <input
                   key={`otp${index}`}
@@ -95,7 +95,7 @@ const OtpVerification = () => {
                   value={el}
                   ref={(ref) => (inputRef.current[index] = ref)}
                   onChange={(e) => handleChange(e, index)}
-                  className="w-12 h-12 text-lg font-bold text-center rounded-lg bg-neutral-800 border border-neutral-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
+                  className="w-10 h-10 sm:w-12 sm:h-12 text-base sm:text-lg font-bold text-center rounded-md sm:rounded-lg bg-neutral-800 border border-neutral-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
                 />
               ))}
             </div>

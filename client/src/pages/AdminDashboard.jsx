@@ -148,26 +148,26 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-8 mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <button
               onClick={() => navigate('/')}
-              className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
+              className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors text-sm sm:text-base"
             >
-              <FaArrowLeft />
+              <FaArrowLeft className="text-sm sm:text-base" />
               <span>Back to Home</span>
             </button>
-            <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Admin Dashboard</h1>
           </div>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm sm:text-base text-gray-600">
             Managing Provider Requests
           </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -301,9 +301,7 @@ const AdminDashboard = () => {
                           <div className="text-sm font-medium text-gray-900">
                             {request.userName}
                           </div>
-                          <div className="text-sm text-gray-500">
-                            {request.userId?.mobile || 'No phone'}
-                          </div>
+                         
                         </div>
                       </div>
                     </td>
@@ -415,4 +413,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard; 
+export default AdminDashboard;

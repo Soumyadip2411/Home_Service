@@ -10,11 +10,12 @@ const ChatPage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-start pt-8">
-      
-      <ChatSection bookingId={bookingId} userId={userId} userRole={userRole} />
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-start p-2 sm:p-4 md:p-8">
+      <div className="w-full max-w-4xl">
+        <ChatSection bookingId={bookingId} userId={userId} userRole={userRole} />
+      </div>
     </div>
   );
 };
 
-export default ChatPage; 
+export default ChatPage;
