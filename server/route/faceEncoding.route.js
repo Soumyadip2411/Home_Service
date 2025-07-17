@@ -14,7 +14,7 @@ router.post("/register", upload.single("file"), registerFace);
 // Session-based face verification
 router.post("/start-session", startFaceVerification);
 router.post("/verify-frame", upload.single("file"), verifyFaceFrame);
-router.post("/end-session", endFaceVerification);
+router.post("/end-session", upload.none(), endFaceVerification);
 
 // Search provider by face
 router.post("/search-provider", upload.single("file"), searchProviderByFace);

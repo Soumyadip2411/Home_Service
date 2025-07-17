@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { FiSearch, FiTag, FiDollarSign, FiMapPin, FiClock, FiStar, FiGrid, FiMap } from "react-icons/fi";
 import { useLocation } from "react-router-dom";
 import SearchByFaceModal from "./SearchByFaceModal";
+import ReactDOM from "react-dom";
 
 const Services = () => {
   const [services, setServices] = useState([]);
@@ -231,6 +232,20 @@ const Services = () => {
 
   return (
     <div className="p-6">
+      {/* Render SearchByFaceModal as a portal so it overlays the whole app */}
+      {showFaceModal && ReactDOM.createPortal(
+        <SearchByFaceModal
+          isOpen={showFaceModal}
+          onClose={() => {
+            setShowFaceModal(false);
+            setFaceSearchResults(null);
+            setFaceSearchError("");
+          }}
+          onProviderName={handleProviderName}
+        />,
+        document.body
+      )}
+
       {user.role === "PROVIDER" && (
         <motion.div
           initial={{ y: -20, opacity: 0 }}
@@ -290,20 +305,6 @@ const Services = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Search by Face Modal */}
-      <SearchByFaceModal
-        isOpen={showFaceModal}
-        onClose={() => {
-          setShowFaceModal(false);
-          setFaceSearchResults(null);
-          setFaceSearchError("");
-        }}
-        onCapture={handleFaceSearch}
-        loading={faceSearchLoading}
-        error={faceSearchError}
-        onProviderName={handleProviderName}
-      />
 
       {/* Filter Section */}
       <motion.div

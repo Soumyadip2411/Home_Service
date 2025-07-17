@@ -74,38 +74,49 @@ export const registerFace = async (req, res) => {
 
 export const searchProviderByFace = async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ success: false, msg: "No image uploaded." });
+    const { sessionId } = req.body;
+    if (!req.file || !sessionId) {
+      return res.status(400).json({ success: false, msg: "Missing image or sessionId." });
     }
     const formData = new FormData();
+    formData.append("session_id", sessionId);
     formData.append("file", req.file.buffer, req.file.originalname);
+
     let response;
     try {
       response = await axios.post(
-        `${PYTHON_SERVICE_URL}/verify-face`,
+        `${PYTHON_SERVICE_URL}/verify-frame`,
         formData,
         { headers: formData.getHeaders() }
       );
     } catch (err) {
       if (err.response && err.response.data) {
-        return res.status(err.response.status).json(err.response.data);
+        // Only forward 400/404 for actual malformed requests
+        if (err.response.status === 400 || err.response.status === 404) {
+          return res.status(err.response.status).json(err.response.data);
+        }
+        // For any other error, treat as server error
+        return res.status(500).json({ success: false, msg: "Face verification failed." });
       }
       throw err;
     }
+
+    // If no match found, Python returns 200 with success: false
     if (response.data.success && response.data.user_id) {
       // Find user and check if provider
       const user = await UserModel.findById(response.data.user_id);
       if (!user || user.role !== "PROVIDER") {
-        return res.status(404).json({ success: false, msg: "No matching provider found." });
+        return res.status(200).json({ success: false, msg: "No matching provider found." });
       }
       // Find all services by this provider
       const services = await ServiceModel.find({ provider: user._id }).populate("category").populate("provider");
       if (!services.length) {
-        return res.status(404).json({ success: false, msg: "Provider found, but no services listed." });
+        return res.status(200).json({ success: false, msg: "Provider found, but no services listed." });
       }
       return res.json({ success: true, providerId: user._id, provider: user, services });
     } else {
-      return res.status(404).json({ success: false, msg: "No matching provider found." });
+      // Always return 200 for "no match found"
+      return res.status(200).json({ success: false, msg: "No matching provider found." });
     }
   } catch (err) {
     console.error(err);
