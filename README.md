@@ -159,6 +159,42 @@ Proceed with your bookings and it will increase the progress bar
 - **OpenCage Geocoding** - Reverse geocoding for address resolution
 - **Cloudinary** - Image upload and management
 
+## 🐳 Containerization & Microservices
+
+### Python Face Recognition Microservice (Dockerized)
+- The platform includes a Python-based microservice for face recognition and verification, used for features like face login and registration.
+- The microservice is built with FastAPI and runs in a Docker container for easy deployment and scalability.
+- The Node.js backend communicates with this service via HTTP (see `PYTHON_SERVICE_URL` in your backend `.env`).
+
+#### Key Endpoints
+- `POST /register-face` — Register a user's face (returns encoding)
+- `POST /start-verify-session` — Start a verification session with user encodings
+- `POST /verify-frame` — Verify a face frame against registered encodings
+- `POST /end-verify-session` — End a verification session
+
+### Docker Usage
+- The microservice is fully containerized using Docker. You can build and run it locally, or push the image to DockerHub for cloud deployment.
+
+#### Build the Docker Image
+```bash
+cd python_environment
+docker build -t your-dockerhub-username/home-service-face:latest .
+```
+
+#### Run the Docker Container
+```bash
+docker run -d -p 10000:10000 your-dockerhub-username/home-service-face:latest
+```
+
+#### (Optional) Push to DockerHub
+```bash
+docker login
+docker push your-dockerhub-username/home-service-face:latest
+```
+
+- The FastAPI service will be available at `http://localhost:10000`.
+- Update your backend `.env` with `PYTHON_SERVICE_URL=http://localhost:10000` (or your deployed URL).
+
 ## 📦 Installation & Setup
 
 ### Prerequisites
@@ -186,6 +222,13 @@ npm install
 ```bash
 cd ../client
 npm install
+```
+
+#### Python Microservice (Face Recognition)
+```bash
+cd python_environment
+pip install -r requirements.txt
+# OR use Docker as described in the Containerization section
 ```
 
 ### 3. Environment Variables
@@ -310,6 +353,8 @@ home-service-platform/
 ## 🔧 API Endpoints
 
 ### Authentication
+- `POST /api/auth/register`
+### Authentication
 - `POST /api/auth/register` - User registration
 - `POST /api/auth/login` - User login
 - `POST /api/auth/forgot-password` - Password recovery
@@ -426,11 +471,6 @@ Make sure to set all required environment variables in your hosting platform:
 - **Advanced AI**: Machine learning for better recommendations
 
 ---
-
-⭐ **Star this repository if you found it helpful!**
-
-Made with ❤️ by Soumyadip Pramanik and team.
-
 ## 🗺️ Google Maps Setup
 See `GOOGLE_MAPS_SETUP.md` for full instructions. You must:
 - Enable Maps JavaScript, Geocoding, and Places APIs in Google Cloud
@@ -452,3 +492,9 @@ See `GOOGLE_MAPS_SETUP.md` for full instructions. You must:
 - Always use environment variables for sensitive data
 - For local dev, use `npm run dev` in both `server` and `client`
 - Booking emails will only show location/pin if provided by the user
+
+
+⭐ **Star this repository if you found it helpful!**
+
+Made with ❤️ by Soumyadip Pramanik and team.
+

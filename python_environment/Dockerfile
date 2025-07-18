@@ -9,15 +9,17 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential cmake \
     libglib2.0-0 libsm6 libxrender1 libxext6 libgtk2.0-dev \
-    libboost-all-dev && \
+    libboost-all-dev libgl1 && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
+# Copy only requirements first for better caching
+COPY requirements.txt ./
+
+# Install Python dependencies
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-# Copy the rest of your code
+# Now copy the rest of the code
 COPY . .
 
 # Expose the port (Render will set $PORT)
