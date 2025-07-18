@@ -231,7 +231,7 @@ const Services = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-2 sm:p-4 md:p-6">
       {/* Render SearchByFaceModal as a portal so it overlays the whole app */}
       {showFaceModal && ReactDOM.createPortal(
         <SearchByFaceModal
@@ -242,21 +242,20 @@ const Services = () => {
             setFaceSearchError("");
           }}
           onProviderName={handleProviderName}
-        />,
-        document.body
+        />, document.body
       )}
 
       {user.role === "PROVIDER" && (
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="mb-8 flex gap-4"
+          className="mb-4 sm:mb-8 flex flex-col sm:flex-row gap-3 sm:gap-4"
         >
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setShowAddService(true)}
-            className="bg-gradient-to-r from-green-600 to-green-500 text-white px-6 py-3 rounded-lg hover:from-green-700 hover:to-green-600 transition-all duration-300 shadow-lg"
+            className="w-full sm:w-auto bg-gradient-to-r from-green-600 to-green-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:from-green-700 hover:to-green-600 transition-all duration-300 shadow-lg text-base sm:text-lg"
           >
             Add New Service
           </motion.button>
@@ -265,7 +264,7 @@ const Services = () => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => navigate("/your-services")}
-              className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-blue-600 transition-all duration-300 shadow-lg"
+              className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:from-blue-700 hover:to-blue-600 transition-all duration-300 shadow-lg text-base sm:text-lg"
             >
               Your Services
             </motion.button>
@@ -280,15 +279,14 @@ const Services = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-            style={{ minHeight: '100vh' }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm min-h-screen p-2 sm:p-0"
           >
             <motion.div
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.98, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 120, damping: 18 }}
-              className="relative w-full max-w-3xl mx-auto"
+              className="relative w-full max-w-lg sm:max-w-3xl mx-auto"
             >
               <button
                 onClick={() => setShowAddService(false)}
@@ -308,15 +306,15 @@ const Services = () => {
 
       {/* Filter Section */}
       <motion.div
-        className="bg-white/40 backdrop-blur-md p-6 rounded-xl shadow-xl mb-8 border border-white/20"
+        className="bg-white/40 backdrop-blur-md p-3 sm:p-6 rounded-xl shadow-xl mb-6 sm:mb-8 border border-white/20"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 sm:gap-6">
           {/* Search by Face Button */}
           <div className="col-span-1 flex items-end">
             <button
-              className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-4 py-2 rounded-lg shadow hover:from-cyan-600 hover:to-blue-600 transition-all font-semibold"
+              className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-3 sm:px-4 py-2 rounded-lg shadow hover:from-cyan-600 hover:to-blue-600 transition-all font-semibold text-sm sm:text-base"
               onClick={() => setShowFaceModal(true)}
             >
               <span role="img" aria-label="face">🔍</span> Search by Face
@@ -325,25 +323,25 @@ const Services = () => {
 
           <div className="relative">
             <FiSearch className="absolute left-3 top-[38px] text-gray-500" />
-            <label className="block text-sm font-medium text-gray-700 mb-2">Search Services</label>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Search Services</label>
             <input
               type="text"
               name="search"
               value={filters.search}
               onChange={handleFilterChange}
               placeholder="Search by title, tags, provider, or category..."
-              className="w-full pl-10 pr-4 py-2 rounded-lg bg-white/70 backdrop-blur-sm border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300"
+              className="w-full pl-9 pr-3 py-2 rounded-lg bg-white/70 backdrop-blur-sm border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base"
             />
           </div>
 
           <div className="relative">
             <FiTag className="absolute left-3 top-[38px] text-gray-500" />
-            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Category</label>
             <select
               name="category"
               value={filters.category}
               onChange={handleFilterChange}
-              className="w-full pl-10 pr-4 py-2 rounded-lg bg-white/70 backdrop-blur-sm border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300"
+              className="w-full pl-9 pr-3 py-2 rounded-lg bg-white/70 backdrop-blur-sm border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base"
             >
               <option value="All Categories">All Categories</option>
               {categories.map((category) => (
@@ -356,20 +354,20 @@ const Services = () => {
 
           <div className="relative">
             <FiDollarSign className="absolute left-3 top-[38px] text-gray-500" />
-            <label className="block text-sm font-medium text-gray-700 mb-2">Max Price (₹)</label>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Max Price (₹)</label>
             <input
               type="number"
               name="maxPrice"
               value={filters.maxPrice}
               onChange={handleFilterChange}
               placeholder="Enter maximum price"
-              className="w-full pl-10 pr-4 py-2 rounded-lg bg-white/70 backdrop-blur-sm border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300"
+              className="w-full pl-9 pr-3 py-2 rounded-lg bg-white/70 backdrop-blur-sm border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base"
             />
           </div>
 
           <div className="relative">
             <FiMapPin className="absolute left-3 top-[38px] text-gray-500" />
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
               Distance (km)
             </label>
             <input
@@ -378,7 +376,7 @@ const Services = () => {
               value={filters.radius}
               onChange={handleFilterChange}
               placeholder="Max distance in km"
-              className="w-full pl-10 pr-4 py-2 rounded-lg bg-white/70 backdrop-blur-sm border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300"
+              className="w-full pl-9 pr-3 py-2 rounded-lg bg-white/70 backdrop-blur-sm border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base"
             />
           </div>
         </div>
@@ -386,39 +384,38 @@ const Services = () => {
 
       {/* View Mode Toggle */}
       <motion.div
-        className="flex justify-between items-center mb-6"
+        className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2 sm:gap-0"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <div className="flex items-center space-x-2">
-          <span className="text-gray-700 font-medium">View Mode:</span>
+        <div className="flex items-center space-x-2 mb-2 sm:mb-0">
+          <span className="text-gray-700 font-medium text-sm sm:text-base">View Mode:</span>
           <div className="flex bg-white/70 backdrop-blur-sm rounded-lg p-1 border border-gray-200">
             <button
               onClick={() => handleViewModeChange('grid')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-300 ${
+              className={`flex items-center space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md transition-all duration-300 ${
                 viewMode === 'grid'
                   ? 'bg-green-500 text-white shadow-md'
                   : 'text-gray-600 hover:text-gray-800'
-              }`}
+              } text-xs sm:text-sm`}
             >
               <FiGrid className="w-4 h-4" />
-              <span className="text-sm font-medium">Grid</span>
+              <span className="hidden xs:inline text-xs sm:text-sm font-medium">Grid</span>
             </button>
             <button
               onClick={() => handleViewModeChange('map')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-300 ${
+              className={`flex items-center space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md transition-all duration-300 ${
                 viewMode === 'map'
                   ? 'bg-green-500 text-white shadow-md'
                   : 'text-gray-600 hover:text-gray-800'
-              }`}
+              } text-xs sm:text-sm`}
             >
               <FiMap className="w-4 h-4" />
-              <span className="text-sm font-medium">Map</span>
+              <span className="hidden xs:inline text-xs sm:text-sm font-medium">Map</span>
             </button>
           </div>
         </div>
-        
-        <div className="text-sm text-gray-600">
+        <div className="text-xs sm:text-sm text-gray-600">
           {filteredServices.length} service{filteredServices.length !== 1 ? 's' : ''} found
         </div>
       </motion.div>
@@ -448,7 +445,7 @@ const Services = () => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.3 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6"
           >
             {faceSearchResults.length === 0 ? (
               <motion.div
@@ -478,7 +475,7 @@ const Services = () => {
                 return (
                   <motion.div
                     key={service._id}
-                    className="group relative backdrop-blur-sm bg-white/10 dark:bg-gray-800/10 rounded-2xl overflow-hidden border border-white/20 dark:border-gray-700/20 hover:bg-white/20 dark:hover:bg-gray-800/20 transition-all duration-500 cursor-pointer"
+                    className="group relative backdrop-blur-sm bg-white/10 dark:bg-gray-800/10 rounded-2xl overflow-hidden border border-white/20 dark:border-gray-700/20 hover:bg-white/20 dark:hover:bg-gray-800/20 transition-all duration-500 cursor-pointer p-3 sm:p-6"
                     onClick={() => navigate(`/service/${service._id}`)}
                     variants={{
                       hidden: { y: 20, opacity: 0 },
@@ -506,7 +503,7 @@ const Services = () => {
                         initial={{ opacity: 0, scale: 0 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: index * 0.1 + 0.2 }}
-                        className="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg z-10"
+                        className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold shadow-lg z-10"
                       >
                         ⭐ Popular
                       </motion.div>
@@ -518,7 +515,7 @@ const Services = () => {
                         initial={{ opacity: 0, scale: 0 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: index * 0.1 + 0.2 }}
-                        className="absolute top-4 right-4 bg-gradient-to-r from-blue-400 to-purple-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg z-10"
+                        className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-gradient-to-r from-blue-400 to-purple-500 text-white px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold shadow-lg z-10"
                       >
                         🆕 New
                       </motion.div>
@@ -530,8 +527,8 @@ const Services = () => {
                       initial={false}
                     />
 
-                    <div className="p-6 relative z-10">
-                      <div className="flex items-center gap-4 mb-4">
+                    <div className="p-2 sm:p-6 relative z-10">
+                      <div className="flex items-center gap-2 sm:gap-4 mb-2 sm:mb-4">
                         <motion.div
                           whileHover={{ scale: 1.1, rotate: 5 }}
                           className="relative"
@@ -540,10 +537,10 @@ const Services = () => {
                             <img
                               src={service.provider.avatar}
                               alt={service.provider?.name}
-                              className="w-12 h-12 rounded-full object-cover ring-2 ring-green-500/30 group-hover:ring-green-500 transition-all duration-300"
+                              className="w-8 h-8 sm:w-12 sm:h-12 rounded-full object-cover ring-2 ring-green-500/30 group-hover:ring-green-500 transition-all duration-300"
                             />
                           ) : (
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-bold ring-2 ring-green-500/30 group-hover:ring-green-500 transition-all duration-300">
+                            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-bold ring-2 ring-green-500/30 group-hover:ring-green-500 transition-all duration-300 text-xs sm:text-base">
                               {service.provider?.name
                                 ? service.provider.name
                                     .split(' ')
@@ -556,57 +553,53 @@ const Services = () => {
                           )}
                         </motion.div>
                         <div>
-                          <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
+                          <h3 className="font-semibold text-base sm:text-lg text-gray-800 dark:text-gray-100 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
                             {service.title}
                           </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors duration-300">
+                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors duration-300">
                             by {service.provider?.name}
                           </p>
                         </div>
                       </div>
-                      
                       {/* Enhanced Distance Display */}
                       <motion.div 
-                        className="flex items-center gap-2 mb-4 text-gray-600 dark:text-gray-400"
+                        className="flex items-center gap-1 sm:gap-2 mb-2 sm:mb-4 text-gray-600 dark:text-gray-400"
                         whileHover={{ x: 5 }}
                         transition={{ type: "spring", stiffness: 300 }}
                       >
                         <FiMapPin className="text-green-500 group-hover:text-green-600 transition-colors duration-300" />
-                        <span className="text-sm font-medium">{distanceText}</span>
+                        <span className="text-xs sm:text-sm font-medium">{distanceText}</span>
                       </motion.div>
-                      
-                      <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 group-hover:line-clamp-none transition-all duration-300 group-hover:text-gray-700 dark:group-hover:text-gray-300">
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-2 sm:mb-4 line-clamp-2 group-hover:line-clamp-none transition-all duration-300 group-hover:text-gray-700 dark:group-hover:text-gray-300">
                         {service.description}
                       </p>
-                      
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-4">
+                      <div className="flex items-center justify-between mb-2 sm:mb-4">
+                        <div className="flex items-center gap-2 sm:gap-4">
                           <motion.span 
-                            className="text-2xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent"
+                            className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent"
                             whileHover={{ scale: 1.05 }}
                           >
                             ₹{service.price}
                           </motion.span>
                           <motion.div 
-                            className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-full group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors duration-300"
+                            className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900/30 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors duration-300"
                             whileHover={{ scale: 1.05 }}
                           >
                             <FiClock className="w-4 h-4 text-blue-500" />
-                            <span className="text-blue-700 dark:text-blue-300 font-medium">{service.duration} hr{service.duration !== 1 ? 's' : ''}</span>
+                            <span className="text-xs sm:text-base text-blue-700 dark:text-blue-300 font-medium">{service.duration} hr{service.duration !== 1 ? 's' : ''}</span>
                           </motion.div>
                         </div>
                         <motion.div 
-                          className="flex items-center gap-1 bg-yellow-100 dark:bg-yellow-900/30 px-3 py-1 rounded-full group-hover:bg-yellow-200 dark:group-hover:bg-yellow-900/50 transition-colors duration-300"
+                          className="flex items-center gap-1 bg-yellow-100 dark:bg-yellow-900/30 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full group-hover:bg-yellow-200 dark:group-hover:bg-yellow-900/50 transition-colors duration-300"
                           whileHover={{ scale: 1.05 }}
                         >
                           <span className="text-yellow-500">★</span>
-                          <span className="text-yellow-700 dark:text-yellow-300 font-medium">{service.avgRating?.toFixed(1) || "New"}</span>
+                          <span className="text-xs sm:text-base text-yellow-700 dark:text-yellow-300 font-medium">{service.avgRating?.toFixed(1) || "New"}</span>
                         </motion.div>
                       </div>
-
-                      <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+                      <div className="flex justify-between items-center pt-2 sm:pt-4 border-t border-gray-200">
                         <motion.span 
-                          className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-600 font-medium group-hover:bg-gray-200 transition-colors duration-300"
+                          className="px-2 sm:px-3 py-0.5 sm:py-1 bg-gray-100 rounded-full text-xs sm:text-sm text-gray-600 font-medium group-hover:bg-gray-200 transition-colors duration-300"
                           whileHover={{ scale: 1.05 }}
                         >
                           {service.category?.name}
@@ -616,7 +609,7 @@ const Services = () => {
                             e.stopPropagation();
                             navigate(`/book-service/${service._id}`);
                           }}
-                          className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg hover:from-green-700 hover:to-green-600 transition-all duration-300 shadow-md hover:shadow-lg font-medium"
+                          className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg hover:from-green-700 hover:to-green-600 transition-all duration-300 shadow-md hover:shadow-lg font-medium text-xs sm:text-base"
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                         >
@@ -624,7 +617,6 @@ const Services = () => {
                         </motion.button>
                       </div>
                     </div>
-
                     {/* Ripple Effect on Click */}
                     <motion.div
                       className="absolute inset-0 bg-white/20 dark:bg-gray-600/20 rounded-2xl"
@@ -644,11 +636,11 @@ const Services = () => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.3 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6"
           >
             {loading ? (
               <div className="col-span-full flex justify-center items-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+                <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-t-2 border-b-2 border-green-500"></div>
               </div>
             ) : filteredServices.length === 0 ? (
               <motion.div
@@ -678,7 +670,7 @@ const Services = () => {
                 return (
                   <motion.div
                     key={service._id}
-                    className="group relative backdrop-blur-sm bg-white/10 dark:bg-gray-800/10 rounded-2xl overflow-hidden border border-white/20 dark:border-gray-700/20 hover:bg-white/20 dark:hover:bg-gray-800/20 transition-all duration-500 cursor-pointer"
+                    className="group relative backdrop-blur-sm bg-white/10 dark:bg-gray-800/10 rounded-2xl overflow-hidden border border-white/20 dark:border-gray-700/20 hover:bg-white/20 dark:hover:bg-gray-800/20 transition-all duration-500 cursor-pointer p-3 sm:p-6"
                     onClick={() => navigate(`/service/${service._id}`)}
                     variants={{
                       hidden: { y: 20, opacity: 0 },
@@ -706,7 +698,7 @@ const Services = () => {
                         initial={{ opacity: 0, scale: 0 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: index * 0.1 + 0.2 }}
-                        className="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg z-10"
+                        className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold shadow-lg z-10"
                       >
                         ⭐ Popular
                       </motion.div>
@@ -718,7 +710,7 @@ const Services = () => {
                         initial={{ opacity: 0, scale: 0 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: index * 0.1 + 0.2 }}
-                        className="absolute top-4 right-4 bg-gradient-to-r from-blue-400 to-purple-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg z-10"
+                        className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-gradient-to-r from-blue-400 to-purple-500 text-white px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold shadow-lg z-10"
                       >
                         🆕 New
                       </motion.div>
@@ -730,8 +722,8 @@ const Services = () => {
                       initial={false}
                     />
 
-                    <div className="p-6 relative z-10">
-                      <div className="flex items-center gap-4 mb-4">
+                    <div className="p-2 sm:p-6 relative z-10">
+                      <div className="flex items-center gap-2 sm:gap-4 mb-2 sm:mb-4">
                         <motion.div
                           whileHover={{ scale: 1.1, rotate: 5 }}
                           className="relative"
@@ -740,10 +732,10 @@ const Services = () => {
                             <img
                               src={service.provider.avatar}
                               alt={service.provider?.name}
-                              className="w-12 h-12 rounded-full object-cover ring-2 ring-green-500/30 group-hover:ring-green-500 transition-all duration-300"
+                              className="w-8 h-8 sm:w-12 sm:h-12 rounded-full object-cover ring-2 ring-green-500/30 group-hover:ring-green-500 transition-all duration-300"
                             />
                           ) : (
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-bold ring-2 ring-green-500/30 group-hover:ring-green-500 transition-all duration-300">
+                            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-bold ring-2 ring-green-500/30 group-hover:ring-green-500 transition-all duration-300 text-xs sm:text-base">
                               {service.provider?.name
                                 ? service.provider.name
                                     .split(' ')
@@ -756,57 +748,53 @@ const Services = () => {
                           )}
                         </motion.div>
                         <div>
-                          <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
+                          <h3 className="font-semibold text-base sm:text-lg text-gray-800 dark:text-gray-100 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
                             {service.title}
                           </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors duration-300">
+                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors duration-300">
                             by {service.provider?.name}
                           </p>
                         </div>
                       </div>
-                      
                       {/* Enhanced Distance Display */}
                       <motion.div 
-                        className="flex items-center gap-2 mb-4 text-gray-600 dark:text-gray-400"
+                        className="flex items-center gap-1 sm:gap-2 mb-2 sm:mb-4 text-gray-600 dark:text-gray-400"
                         whileHover={{ x: 5 }}
                         transition={{ type: "spring", stiffness: 300 }}
                       >
                         <FiMapPin className="text-green-500 group-hover:text-green-600 transition-colors duration-300" />
-                        <span className="text-sm font-medium">{distanceText}</span>
+                        <span className="text-xs sm:text-sm font-medium">{distanceText}</span>
                       </motion.div>
-                      
-                      <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 group-hover:line-clamp-none transition-all duration-300 group-hover:text-gray-700 dark:group-hover:text-gray-300">
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-2 sm:mb-4 line-clamp-2 group-hover:line-clamp-none transition-all duration-300 group-hover:text-gray-700 dark:group-hover:text-gray-300">
                         {service.description}
                       </p>
-                      
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-4">
+                      <div className="flex items-center justify-between mb-2 sm:mb-4">
+                        <div className="flex items-center gap-2 sm:gap-4">
                           <motion.span 
-                            className="text-2xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent"
+                            className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent"
                             whileHover={{ scale: 1.05 }}
                           >
                             ₹{service.price}
                           </motion.span>
                           <motion.div 
-                            className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-full group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors duration-300"
+                            className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900/30 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors duration-300"
                             whileHover={{ scale: 1.05 }}
                           >
                             <FiClock className="w-4 h-4 text-blue-500" />
-                            <span className="text-blue-700 dark:text-blue-300 font-medium">{service.duration} hr{service.duration !== 1 ? 's' : ''}</span>
+                            <span className="text-xs sm:text-base text-blue-700 dark:text-blue-300 font-medium">{service.duration} hr{service.duration !== 1 ? 's' : ''}</span>
                           </motion.div>
                         </div>
                         <motion.div 
-                          className="flex items-center gap-1 bg-yellow-100 dark:bg-yellow-900/30 px-3 py-1 rounded-full group-hover:bg-yellow-200 dark:group-hover:bg-yellow-900/50 transition-colors duration-300"
+                          className="flex items-center gap-1 bg-yellow-100 dark:bg-yellow-900/30 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full group-hover:bg-yellow-200 dark:group-hover:bg-yellow-900/50 transition-colors duration-300"
                           whileHover={{ scale: 1.05 }}
                         >
                           <span className="text-yellow-500">★</span>
-                          <span className="text-yellow-700 dark:text-yellow-300 font-medium">{service.avgRating?.toFixed(1) || "New"}</span>
+                          <span className="text-xs sm:text-base text-yellow-700 dark:text-yellow-300 font-medium">{service.avgRating?.toFixed(1) || "New"}</span>
                         </motion.div>
                       </div>
-
-                      <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+                      <div className="flex justify-between items-center pt-2 sm:pt-4 border-t border-gray-200">
                         <motion.span 
-                          className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-600 font-medium group-hover:bg-gray-200 transition-colors duration-300"
+                          className="px-2 sm:px-3 py-0.5 sm:py-1 bg-gray-100 rounded-full text-xs sm:text-sm text-gray-600 font-medium group-hover:bg-gray-200 transition-colors duration-300"
                           whileHover={{ scale: 1.05 }}
                         >
                           {service.category?.name}
@@ -816,7 +804,7 @@ const Services = () => {
                             e.stopPropagation();
                             navigate(`/book-service/${service._id}`);
                           }}
-                          className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg hover:from-green-700 hover:to-green-600 transition-all duration-300 shadow-md hover:shadow-lg font-medium"
+                          className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg hover:from-green-700 hover:to-green-600 transition-all duration-300 shadow-md hover:shadow-lg font-medium text-xs sm:text-base"
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                         >
@@ -824,7 +812,6 @@ const Services = () => {
                         </motion.button>
                       </div>
                     </div>
-
                     {/* Ripple Effect on Click */}
                     <motion.div
                       className="absolute inset-0 bg-white/20 dark:bg-gray-600/20 rounded-2xl"

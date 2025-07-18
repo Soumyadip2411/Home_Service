@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Header from '../components/Header';
 import { motion } from 'framer-motion';
+import MobileFooter from '../components/MobileFooter';
 
 const Home = () => {
   return (
@@ -32,6 +33,7 @@ const Home = () => {
           <Outlet />
         </motion.div>
       </motion.div>
+      <MobileFooter />
     </div>
   );
 };

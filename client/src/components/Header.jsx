@@ -6,7 +6,7 @@ import { logout, setUserDetails } from '../store/userSlice';
 import { toast } from 'react-hot-toast';
 import Axios from '../utils/Axios';
 import SummaryApi from '../common/SummaryApi';
-import { FiMapPin, FiChevronDown, FiBell, FiCamera, FiUser, FiSettings, FiShield } from 'react-icons/fi';
+import { FiMapPin, FiChevronDown, FiBell, FiCamera, FiUser, FiSettings, FiShield, FiHome, FiThumbsUp, FiCalendar, FiGrid } from 'react-icons/fi';
 import { FaRobot } from 'react-icons/fa';
 import AvatarUpload from './AvatarUpload';
 import FaceRegisterModal from "./FaceRegisterModal";
@@ -386,7 +386,7 @@ const Header = () => {
               <div className="relative" ref={locationMenuRef}>
                 <button
                   onClick={() => setShowLocationMenu((prev) => !prev)}
-                  className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+                  className="flex items-center text-gray-300 hover:text-white transition-colors text-xl sm:text-sm"
                 >
                   <FiMapPin className="text-green-500" />
                   <span className="text-sm min-w-[120px] text-left">
@@ -404,18 +404,17 @@ const Header = () => {
                 
                 {/* Location Dropdown Menu */}
                 {showLocationMenu && (
-                  <div className="absolute left-0 top-10 bg-white shadow-lg rounded-lg p-3 z-50 min-w-[200px]">
-                    <div className="mb-3">
+                  <div className="absolute left-1/2 top-10 transform -translate-x-1/2 bg-white shadow-lg rounded-lg p-3 z-50 w-[95vw] max-w-xs sm:left-0 sm:transform-none sm:min-w-[200px]">
+                    <div className="mb-3 text-center">
                       <h4 className="text-sm font-semibold text-gray-800 mb-2">Location Settings</h4>
                       <p className="text-xs text-gray-600 mb-3">
                         Current: {currentLocation}
                       </p>
                     </div>
-                    
                     <button
                       onClick={getUserLocation}
                       disabled={locationLoading}
-                      className="w-full px-3 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                      className="w-full max-w-xs mx-auto px-3 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                     >
                       {locationLoading ? (
                         <>
@@ -429,8 +428,7 @@ const Header = () => {
                         </>
                       )}
                     </button>
-                    
-                    <div className="mt-2 pt-2 border-t border-gray-200">
+                    <div className="mt-2 pt-2 border-t border-gray-200 text-center">
                       <p className="text-xs text-gray-500">
                         This helps us show you relevant services nearby
                       </p>
@@ -439,16 +437,16 @@ const Header = () => {
                 )}
               </div>
 
-              {/* Notifications Button */}
-              <div className="relative mr-6">
+              {/* Notification Icon Only (mobile) */}
+              <div className="relative flex items-center">
                 <button
                   className="relative p-2 rounded-full bg-white/10 hover:bg-green-600 transition-colors"
                   onClick={() => setShowNotifications(v => !v)}
                   aria-label="Notifications"
                 >
-                  <FiBell className="text-2xl text-white" />
+                  <FiBell className="text-xl text-white" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 font-bold animate-pulse">
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] sm:text-xs rounded-full px-1 py-0.5 font-bold animate-pulse">
                       {unreadCount}
                     </span>
                   )}
@@ -459,7 +457,7 @@ const Header = () => {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute right-0 mt-2 w-96 max-w-[90vw] bg-white shadow-2xl rounded-xl z-50 border border-gray-200 overflow-hidden"
+                    className="absolute right-0 top-full w-96 max-w-[90vw] bg-white shadow-2xl rounded-xl z-50 border border-gray-200 overflow-hidden"
                     style={{ minWidth: 320 }}
                   >
                     <div className="bg-green-600 text-white px-4 py-3 font-semibold text-lg flex items-center gap-2">
@@ -500,11 +498,11 @@ const Header = () => {
               </div>
             </div>
 
-            {/* Updated Navigation Buttons */}
-            <motion.nav className="flex gap-4">
+            {/* Desktop navigation only (hidden on mobile) */}
+            <motion.nav className="hidden sm:flex gap-2 md:gap-4">
               <motion.button 
                 onClick={() => navigate('/')}
-                className={`px-6 py-2 rounded-lg font-medium transition-all ${
+                className={`flex flex-col items-center justify-center px-2 sm:px-6 py-2 rounded-lg font-medium transition-all text-xs sm:text-base ${
                   !isBookingsActive && !isServicesActive && !isRecommendationsActive
                     ? 'bg-green-600 text-white' 
                     : 'bg-white/10 text-white hover:bg-white/20'
@@ -512,11 +510,12 @@ const Header = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                Home
+                <FiHome className="text-lg sm:mr-2" />
+                <span className="hidden sm:inline">Home</span>
               </motion.button>
               <motion.button 
                 onClick={() => navigate('/recommendations')}
-                className={`px-6 py-2 rounded-lg font-medium transition-all ${
+                className={`flex flex-col items-center justify-center px-2 sm:px-6 py-2 rounded-lg font-medium transition-all text-xs sm:text-base ${
                   isRecommendationsActive 
                     ? 'bg-green-600 text-white' 
                     : 'bg-white/10 text-white hover:bg-white/20'
@@ -524,11 +523,12 @@ const Header = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                Recommendations
+                <FiThumbsUp className="text-lg sm:mr-2" />
+                <span className="hidden sm:inline">Recommendations</span>
               </motion.button>
               <motion.button 
                 onClick={() => navigate('/bookings')}
-                className={`px-6 py-2 rounded-lg font-medium transition-all ${
+                className={`flex flex-col items-center justify-center px-2 sm:px-6 py-2 rounded-lg font-medium transition-all text-xs sm:text-base ${
                   isBookingsActive 
                     ? 'bg-green-600 text-white' 
                     : 'bg-white/10 text-white hover:bg-white/20'
@@ -536,11 +536,12 @@ const Header = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                Bookings
+                <FiCalendar className="text-lg sm:mr-2" />
+                <span className="hidden sm:inline">Bookings</span>
               </motion.button>
               <motion.button 
                 onClick={() => navigate('/services')}
-                className={`px-6 py-2 rounded-lg font-medium transition-all ${
+                className={`flex flex-col items-center justify-center px-2 sm:px-6 py-2 rounded-lg font-medium transition-all text-xs sm:text-base ${
                   isServicesActive 
                     ? 'bg-green-600 text-white' 
                     : 'bg-white/10 text-white hover:bg-white/20'
@@ -548,16 +549,17 @@ const Header = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                Services
+                <FiGrid className="text-lg sm:mr-2" />
+                <span className="hidden sm:inline">Services</span>
               </motion.button>
               <motion.button 
                 onClick={() => navigate('/bot-chat')}
-                className="px-6 py-2 rounded-lg font-medium transition-all bg-yellow-400 text-black hover:bg-yellow-300 flex items-center gap-2"
+                className="flex flex-col items-center justify-center px-2 sm:px-6 py-2 rounded-lg font-medium transition-all text-xs sm:text-base bg-yellow-400 text-black hover:bg-yellow-300"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <FaRobot className="text-lg" />
-                Chatbot
+                <FaRobot className="text-lg sm:mr-2" />
+                <span className="hidden sm:inline">Chatbot</span>
               </motion.button>
             </motion.nav>
           </div>
