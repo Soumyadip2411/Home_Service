@@ -5,14 +5,14 @@
   <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-18.3.1-blue?style=for-the-badge&logo=react" alt="React"/></a>
   <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-18+-green?style=for-the-badge&logo=node.js" alt="Node.js"/></a>
   <a href="https://www.mongodb.com/"><img src="https://img.shields.io/badge/MongoDB-6.0+-green?style=for-the-badge&logo=mongodb" alt="MongoDB"/></a>
+  <a href="https://www.mongodb.com/docs/manual/aggregation/"><img src="https://img.shields.io/badge/MongoDB%20Aggregation-Advanced%20Queries-4DB33D?style=for-the-badge&logo=mongodb" alt="MongoDB Aggregation"/></a>
+  <a href="https://opencv.org/"><img src="https://img.shields.io/badge/OpenCV-Computer%20Vision-5C3EE8?style=for-the-badge&logo=opencv" alt="OpenCV"/></a>
+  <a href="https://github.com/ageitgey/face_recognition"><img src="https://img.shields.io/badge/face--recognition-Face%20Auth%20AI-FF6F00?style=for-the-badge&logo=python" alt="face-recognition"/></a>
   <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind-3.4.9-blue?style=for-the-badge&logo=tailwind-css" alt="Tailwind CSS"/></a>
   <a href="https://openai.com/"><img src="https://img.shields.io/badge/AI-Powered-orange?style=for-the-badge&logo=openai" alt="AI Powered"/></a>
   <a href="https://www.docker.com/"><img src="https://img.shields.io/badge/Docker-Containerized-blue?style=for-the-badge&logo=docker" alt="Docker"/></a>
   <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/FastAPI-Python%20Microservice-009688?style=for-the-badge&logo=fastapi" alt="FastAPI"/></a>
   <a href="https://vercel.com/"><img src="https://img.shields.io/badge/Vercel-Frontend%20Hosting-black?style=for-the-badge&logo=vercel" alt="Vercel"/></a>
-  <a href="https://github.com/yourusername/home-service-platform/stargazers"><img src="https://img.shields.io/github/stars/yourusername/home-service-platform?style=for-the-badge" alt="GitHub stars"/></a>
-  <a href="https://github.com/yourusername/home-service-platform/network/members"><img src="https://img.shields.io/github/forks/yourusername/home-service-platform?style=for-the-badge" alt="GitHub forks"/></a>
-  <a href="https://github.com/yourusername/home-service-platform/issues"><img src="https://img.shields.io/github/issues/yourusername/home-service-platform?style=for-the-badge" alt="GitHub issues"/></a>
 </p>
 
 <!-- Project Stats (replace with real stats if available) -->
