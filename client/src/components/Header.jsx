@@ -283,10 +283,12 @@ const Header = () => {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-white font-medium">
-                    {isLoggedIn ? (user?.name || user?.email?.split('@')[0] || 'Loading...') : 'Guest'}
-                  </h3>
-                  <p className="text-gray-300 text-sm">{user?.role || 'USER'}</p>
+                  <div className="hidden sm:block">
+                    <h3 className="text-white font-medium">
+                      {isLoggedIn ? (user?.name || user?.email?.split('@')[0] || 'Loading...') : 'Guest'}
+                    </h3>
+                    <p className="text-gray-300 text-sm">{user?.role || 'USER'}</p>
+                  </div>
                 </div>
                 {/* Profile Dropdown */}
                 {showProfileMenu && (

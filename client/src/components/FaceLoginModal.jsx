@@ -203,7 +203,7 @@ const FaceLoginModal = ({ isOpen, onClose }) => {
             width={320}
             height={240}
             videoConstraints={{ facingMode: "user" }}
-            className="rounded-2xl border-4 border-cyan-400 shadow-xl relative z-0 bg-black/80"
+            className="rounded-2xl border-4 border-cyan-400 shadow-xl relative z-0 bg-black/80 transform scale-x-[-1] animate-fade-in "
           />
           {/* Scan line animation */}
           <style>{`

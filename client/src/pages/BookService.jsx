@@ -336,6 +336,14 @@ const BookService = () => {
             animate={{ opacity: 1, x: 0 }}
             className="space-y-6"
           >
+            {/* Back Button to Recommendations */}
+            <button
+              onClick={() => navigate('/recommendations')}
+              className="flex items-center gap-2 text-gray-600 hover:text-green-600 font-medium mb-2"
+            >
+              <FiChevronLeft className="w-5 h-5" />
+              <span className="text-base">Back</span>
+            </button>
             <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Select Date & Time</h3>
             
             {/* Calendar Section */}

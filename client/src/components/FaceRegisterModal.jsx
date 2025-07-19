@@ -152,7 +152,7 @@ const FaceRegisterModal = ({ isOpen, onClose }) => {
             width={320}
             height={240}
             videoConstraints={{ facingMode: "user" }}
-            className="rounded-2xl border-4 border-cyan-400 shadow-xl relative z-0 bg-black/80"
+            className="rounded-2xl border-4 border-cyan-400 shadow-xl relative z-0 bg-black/80 "
           />
           {/* Scan line animation */}
           <style>{`
