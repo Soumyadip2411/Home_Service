@@ -36,34 +36,45 @@ export const registerFace = async (req, res) => {
     if (!user) {
       return res.status(400).json({ success: false, msg: "User not found." });
     }
-    if (!req.file) {
-      console.log("No image uploaded");
-      return res.status(400).json({ success: false, msg: "No image uploaded." });
+    // Accept multiple files for different face angles
+    const files = req.files;
+    const MIN_IMAGES = 3;
+    if (!files || files.length < MIN_IMAGES) {
+      return res.status(400).json({ success: false, msg: `Please upload at least ${MIN_IMAGES} face images (different angles).` });
     }
-    // Send image to Python service for encoding
-    const formData = new FormData();
-    formData.append("user_id", userId.toString());
-    formData.append("file", req.file.buffer, req.file.originalname);
-    const response = await axios.post(
-      `${PYTHON_SERVICE_URL}/register-face`,
-      formData,
-      { headers: formData.getHeaders() }
-    );
-    console.log("Python service response:", response.data);
-    if (response.data.success) {
-      if (response.data.encoding) {
-        console.log("Upserting encoding in DB...");
-        await FaceEncodingModel.findOneAndUpdate(
-          { userId },
-          { encoding: response.data.encoding },
-          { upsert: true, new: true }
+    // For each image, get encoding from Python service
+    const encodings = [];
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append("user_id", userId.toString());
+      formData.append("file", file.buffer, file.originalname);
+      try {
+        const response = await axios.post(
+          `${PYTHON_SERVICE_URL}/register-face`,
+          formData,
+          { headers: formData.getHeaders() }
         );
+        if (response.data.success && response.data.encoding) {
+          encodings.push(response.data.encoding);
+        } else {
+          return res.status(400).json({ success: false, msg: response.data.msg || `Face not detected in one of the images: ${file.originalname}` });
+        }
+      } catch (err) {
+        // Forward Python error message if available
+        if (err.response && err.response.data && err.response.data.msg) {
+          return res.status(err.response.status || 500).json({ success: false, msg: err.response.data.msg });
+        }
+        return res.status(500).json({ success: false, msg: "Server error." });
       }
-      await UserModel.findByIdAndUpdate(userId, { faceRegistered: true });
-      return res.json({ success: true, msg: "Face registered." });
-    } else {
-      return res.status(400).json({ success: false, msg: response.data.msg });
     }
+    // Upsert all encodings for the user
+    await FaceEncodingModel.findOneAndUpdate(
+      { userId },
+      { encodings },
+      { upsert: true, new: true }
+    );
+    await UserModel.findByIdAndUpdate(userId, { faceRegistered: true });
+    return res.json({ success: true, msg: "Face encodings registered for multiple angles." });
   } catch (err) {
     console.error("Error in registerFace:", err);
     return res.status(500).json({ success: false, msg: "Server error." });
@@ -127,10 +138,10 @@ export const searchProviderByFace = async (req, res) => {
 export const startFaceVerification = async (req, res) => {
   try {
     const sessionId = uuidv4();
-    const allEncodings = await FaceEncodingModel.find({}, { userId: 1, encoding: 1 });
+    const allEncodings = await FaceEncodingModel.find({}, { userId: 1, encodings: 1 });
     const encodingsList = allEncodings.map(e => ({
       user_id: e.userId.toString(),
-      encoding: e.encoding
+      encodings: e.encodings // array of arrays
     }));
     const encodingsBuffer = Buffer.from(JSON.stringify(encodingsList));
     const formData = new FormData();

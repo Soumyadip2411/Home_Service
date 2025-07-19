@@ -8,9 +8,10 @@ const faceEncodingSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    encoding: {
-      type: [Number], // Array of floats
+    encodings: {
+      type: [[Number]], // Array of arrays of floats
       required: true,
+      default: [],
     },
   },
   {

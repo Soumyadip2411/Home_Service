@@ -7,7 +7,7 @@ const router = express.Router();
 const upload = multer();
 
 // Register face (after login)
-router.post("/register", upload.single("file"), registerFace);
+router.post("/register", upload.array("files", 5), registerFace); // Accept up to 5 images for registration
 
 
 
