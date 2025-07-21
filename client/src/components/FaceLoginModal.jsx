@@ -19,6 +19,7 @@ const FaceLoginModal = ({ isOpen, onClose }) => {
   const intervalRef = useRef();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const scanningStopped = useRef(false);
 
   // Start session when modal opens
   useEffect(() => {
@@ -33,7 +34,7 @@ const FaceLoginModal = ({ isOpen, onClose }) => {
 
   // Stable capture function
   const captureAndVerify = async () => {
-    if (!webcamRef.current || !sessionId) return;
+    if (!webcamRef.current || !sessionId || scanningStopped.current) return;
     const imageSrc = webcamRef.current.getScreenshot();
     if (!imageSrc) return;
     setLoading(true);
@@ -50,6 +51,7 @@ const FaceLoginModal = ({ isOpen, onClose }) => {
       });
       setLoading(false);
       if (response.data.success) {
+        scanningStopped.current = true; // Stop further scanning
         setFaceDetected(true);
         setFeedback("Face Detected! Logging in...");
         setShowTick(true); // Show tick only once
@@ -88,6 +90,7 @@ const FaceLoginModal = ({ isOpen, onClose }) => {
     setIsVerifying(false);
     clearInterval(intervalRef.current);
     setShowTick(false);
+    scanningStopped.current = false;
     if (sessionId) {
       try {
         const formData = new FormData();
@@ -110,6 +113,7 @@ const FaceLoginModal = ({ isOpen, onClose }) => {
       setFaceDetected(null);
       setLoading(false);
       setShowTick(false);
+      scanningStopped.current = false;
       intervalRef.current = setInterval(() => {
         setTimer((prev) => {
           if (prev <= 1) {

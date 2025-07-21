@@ -301,7 +301,11 @@ const Header = () => {
                     <div className="w-full border-b border-gray-200 pb-2 mb-2">
                       <div className="flex items-center gap-2 text-gray-700">
                         <FiUser className="text-sm" />
-                        <span className="text-sm font-medium">Profile</span>
+                        <span className="text-sm font-medium">
+                        <h3 className="text-black font-medium">
+                          {isLoggedIn ? (user?.name || user?.email?.split('@')[0] || 'Loading...') : 'Guest'}
+                        </h3>
+                        </span>
                       </div>
                     </div>
                     
