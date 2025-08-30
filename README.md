@@ -15,7 +15,7 @@
   <a href="https://vercel.com/"><img src="https://img.shields.io/badge/Vercel-Frontend%20Hosting-black?style=for-the-badge&logo=vercel" alt="Vercel"/></a>
 </p>
 
-<!-- Project Stats (replace with real stats if available) -->
+<!-- Project Stats (replace with real stats if available) checking purpose -->
 <p align="center">
   <img src="https://img.shields.io/badge/Users-5,000+-purple?style=flat-square" alt="Users"/>
   <img src="https://img.shields.io/badge/Service%20Providers-500+-blueviolet?style=flat-square" alt="Providers"/>
